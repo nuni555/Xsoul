@@ -1,0 +1,2 @@
+# Xsoul
+script roblox

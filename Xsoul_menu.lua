@@ -9,6 +9,12 @@ local run = game:GetService("RunService")
 local tween = game:GetService("TweenService")
 local tweeninfo = TweenInfo.new
 
+-- mobile detection
+local isMobile = input.TouchEnabled and not input.KeyboardEnabled
+local menuSize = isMobile and UDim2.new(0.9, 0, 0.55, 0) or UDim2.new(0.3, 0, 0.45, 0)
+local menuSizeWidth = isMobile and 0.9 or 0.3
+local menuSizeHeight = isMobile and 0.55 or 0.45
+
 -- additional
 local utility = {}
 
@@ -233,7 +239,7 @@ do
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.5, 0, 0.5, 0),
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Size = UDim2.new(0.3, 0, 0.45, 0),
+                Size = menuSize,
                 Image = "rbxassetid://4641149554",
                 ImageColor3 = themes.Background,
                 ScaleType = Enum.ScaleType.Slice,
@@ -450,7 +456,7 @@ Position = UDim2.new(0, 0, 0, 100),
             if lib.isMaximized then
                 -- Return to normal size
                 utility:Tween(container.Main, {
-                    Size = UDim2.new(0.3, 0, 0.45, 0),
+                    Size = menuSize,
                     Position = lib.normalPosition or UDim2.new(0.5, 0, 0.5, 0)
                 }, 0.3)
                 lib.isMaximized = false
@@ -651,7 +657,7 @@ Position = UDim2.new(0, 0, 0, 100),
         if self.position then
             -- Opening menu
             utility:Tween(container, {
-                Size = UDim2.new(0.3, 0, 0.45, 0),
+                Size = menuSize,
                 Position = self.position
             }, 0.2)
             wait(0.2)
@@ -690,8 +696,8 @@ Position = UDim2.new(0, 0, 0, 100),
             wait(0.2)
 
             utility:Tween(container, {
-                Size = UDim2.new(0.3, 0, 0, 0),
-                Position = self.position + UDim2.new(0, 0, 0.45, 0)
+                Size = UDim2.new(menuSizeWidth, 0, 0, 0),
+                Position = self.position + UDim2.new(0, 0, menuSizeHeight, 0)
             }, 0.2)
             wait(0.2)
             

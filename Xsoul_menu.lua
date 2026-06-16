@@ -224,6 +224,11 @@ do
     -- new classes
 
     function library.new(title)
+        local isMobile = input.TouchEnabled and not input.KeyboardEnabled
+        local menuWidth = isMobile and 0.85 or 0.3
+        local menuHeight = isMobile and 0.55 or 0.45
+        local defaultSize = UDim2.new(menuWidth, 0, menuHeight, 0)
+
         local container = utility:Create("ScreenGui", {
             Name = title,
             Parent = game.CoreGui
@@ -233,7 +238,7 @@ do
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.5, 0, 0.5, 0),
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Size = UDim2.new(0.3, 0, 0.45, 0),
+                Size = defaultSize,
                 Image = "rbxassetid://4641149554",
                 ImageColor3 = themes.Background,
                 ScaleType = Enum.ScaleType.Slice,
@@ -420,7 +425,8 @@ Position = UDim2.new(0, 0, 0, 100),
             toggleButton = container.Main.TopBar.ToggleButton,
             closeButton = container.Main.TopBar.CloseButton,
             position = container.Main.Position,
-            toggling = false
+            toggling = false,
+            defaultSize = defaultSize
         }, library)
         
         -- Set initial state: menu is open, show toggle/close buttons
@@ -450,7 +456,7 @@ Position = UDim2.new(0, 0, 0, 100),
             if lib.isMaximized then
                 -- Return to normal size
                 utility:Tween(container.Main, {
-                    Size = UDim2.new(0.3, 0, 0.45, 0),
+                    Size = defaultSize,
                     Position = lib.normalPosition or UDim2.new(0.5, 0, 0.5, 0)
                 }, 0.3)
                 lib.isMaximized = false
@@ -651,7 +657,7 @@ Position = UDim2.new(0, 0, 0, 100),
         if self.position then
             -- Opening menu
             utility:Tween(container, {
-                Size = UDim2.new(0.3, 0, 0.45, 0),
+                Size = self.defaultSize,
                 Position = self.position
             }, 0.2)
             wait(0.2)
@@ -690,8 +696,8 @@ Position = UDim2.new(0, 0, 0, 100),
             wait(0.2)
 
             utility:Tween(container, {
-                Size = UDim2.new(0.3, 0, 0, 0),
-                Position = self.position + UDim2.new(0, 0, 0.45, 0)
+                Size = UDim2.new(self.defaultSize.X.Scale, 0, 0, 0),
+                Position = self.position + UDim2.new(0, 0, self.defaultSize.Y.Scale, 0)
             }, 0.2)
             wait(0.2)
             

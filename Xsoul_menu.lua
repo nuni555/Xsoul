@@ -1,16 +1,18 @@
 -- Xsoul Ui
--- init
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-
--- services
 local input = game:GetService("UserInputService")
 local run = game:GetService("RunService")
 local tween = game:GetService("TweenService")
 local tweeninfo = TweenInfo.new
-
--- additional
 local utility = {}
+
+-- Mobile config
+local isMobile = input.TouchEnabled
+local CONFIG = {
+    NORMAL_SIZE = isMobile and UDim2.new(0.9, 0, 0.7, 0) or UDim2.new(0.3, 0, 0.45, 0),
+    MAX_SIZE = UDim2.new(0.95, 0, 0.9, 0),
+    CENTER_POS = UDim2.new(0.5, 0, 0.5, 0),
+    TOPBAR_HEIGHT = 38
+}
 
 -- themes
 local objects = {}
@@ -168,40 +170,26 @@ do
     end
 
     function utility:DraggingEnabled(frame, parent)
-
         parent = parent or frame
-
-        -- stolen from wally or kiriot, kek
-        local dragging = false
-        local dragInput, mousePos, framePos
-
+        local dragging, dragInput, mousePos, framePos = false
+        
         frame.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                mousePos = input.Position
-                framePos = parent.Position
-
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
+                dragging, mousePos, framePos = true, input.Position, parent.Position
+                input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
             end
         end)
-
+        
         frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
         end)
-
+        
         input.InputChanged:Connect(function(input)
             if input == dragInput and dragging then
                 local delta = input.Position - mousePos
-                parent.Position  = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+                parent.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
             end
         end)
-
     end
 
     function utility:DraggingEnded(callback)
@@ -231,9 +219,9 @@ do
             utility:Create("ImageLabel", {
                 Name = "Main",
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Position = CONFIG.CENTER_POS,
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Size = UDim2.new(0.3, 0, 0.45, 0),
+                Size = CONFIG.NORMAL_SIZE,
                 Image = "rbxassetid://4641149554",
                 ImageColor3 = themes.Background,
                 ScaleType = Enum.ScaleType.Slice,
@@ -375,16 +363,15 @@ Position = UDim2.new(0, 0, 0, 100),
         utility:InitializeKeybind()
         utility:DraggingEnabled(container.Main, container.Main)
         
-        -- Create Open Button (hidden by default)
         local openButton = utility:Create("ImageButton", {
             Name = "OpenButton",
             Parent = container,
             BackgroundTransparency = 0,
             BackgroundColor3 = themes.TopBarColor,
-            Position = UDim2.new(0.5, 0, 0.5, 0),
+            Position = CONFIG.CENTER_POS,
             AnchorPoint = Vector2.new(0.5, 0.5),
             Size = UDim2.new(0, 40, 0, 40),
-            ZIndex = 5,
+            ZIndex = 10,
             Image = "",
             AutoButtonColor = false,
             Visible = false
@@ -445,22 +432,13 @@ Position = UDim2.new(0, 0, 0, 100),
             container:Destroy()
         end)
         
-        -- Maximize button click event
         lib.maximizeButton.Activated:Connect(function()
             if lib.isMaximized then
-                -- Return to normal size
-                utility:Tween(container.Main, {
-                    Size = UDim2.new(0.3, 0, 0.45, 0),
-                    Position = lib.normalPosition or UDim2.new(0.5, 0, 0.5, 0)
-                }, 0.3)
+                utility:Tween(container.Main, {Size = CONFIG.NORMAL_SIZE, Position = lib.normalPosition or CONFIG.CENTER_POS}, 0.3)
                 lib.isMaximized = false
             else
-                -- Maximize
                 lib.normalPosition = container.Main.Position
-                utility:Tween(container.Main, {
-                    Size = UDim2.new(0.95, 0, 0.9, 0),
-                    Position = UDim2.new(0.5, 0, 0.5, 0)
-                }, 0.3)
+                utility:Tween(container.Main, {Size = CONFIG.MAX_SIZE, Position = CONFIG.CENTER_POS}, 0.3)
                 lib.isMaximized = true
             end
         end)
@@ -649,67 +627,52 @@ Position = UDim2.new(0, 0, 0, 100),
         local topbar = container.TopBar
 
         if self.position then
-            -- Opening menu
-            utility:Tween(container, {
-                Size = UDim2.new(0.3, 0, 0.45, 0),
-                Position = self.position
-            }, 0.2)
+            utility:Tween(container, {Size = CONFIG.NORMAL_SIZE, Position = self.position}, 0.2)
             wait(0.2)
-
-            utility:Tween(topbar, {Size = UDim2.new(1, 0, 0, 38)}, 0.2)
+            utility:Tween(topbar, {Size = UDim2.new(1, 0, 0, CONFIG.TOPBAR_HEIGHT)}, 0.2)
             wait(0.2)
-
             container.ClipsDescendants = false
             self.position = nil
-            self.openButton.Visible = false
-            self.toggleButton.Visible = true
-            self.closeButton.Visible = true
-            self.maximizeButton.Visible = true
+            self:SetButtonVisibility(false, true, true, true)
             
-            -- Expand all sections in the focused page
-            if self.focusedPage then
-                for i, section in pairs(self.focusedPage.sections) do
-                    -- Calculate proper expanded size
-                    local padding = 4
-                    local size = (4 * padding) + section.container.Title.AbsoluteSize.Y
-                    
-                    for _, module in pairs(section.modules) do
-                        size = size + module.AbsoluteSize.Y + padding
-                    end
-                    
-                    utility:Tween(section.container.Parent, {Size = UDim2.new(1, -10, 0, size)}, 0.1)
-                    utility:Tween(section.container.Title, {TextTransparency = 0}, 0.1)
-                end
-            end
+            self:ExpandSections()
         else
-            -- Closing menu
             self.position = container.Position
             container.ClipsDescendants = true
-
             utility:Tween(topbar, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
             wait(0.2)
-
-            utility:Tween(container, {
-                Size = UDim2.new(0.3, 0, 0, 0),
-                Position = self.position + UDim2.new(0, 0, 0.45, 0)
-            }, 0.2)
+            utility:Tween(container, {Size = UDim2.new(CONFIG.NORMAL_SIZE.X.Scale, 0, 0, 0), Position = self.position + UDim2.new(0, 0, CONFIG.NORMAL_SIZE.Y.Scale, 0)}, 0.2)
             wait(0.2)
-            
-            self.openButton.Visible = true
-            self.toggleButton.Visible = false
-            self.closeButton.Visible = false
-            self.maximizeButton.Visible = false
-            
-            -- Collapse all sections in the focused page
-            if self.focusedPage then
-                for i, section in pairs(self.focusedPage.sections) do
-                    utility:Tween(section.container.Parent, {Size = UDim2.new(1, -10, 0, 28)}, 0.1)
-                    utility:Tween(section.container.Title, {TextTransparency = 1}, 0.1)
-                end
-            end
+            self:SetButtonVisibility(true, false, false, false)
+            self:CollapseSections()
         end
 
         self.toggling = false
+    end
+    
+    function library:SetButtonVisibility(open, toggle, close, maximize)
+        self.openButton.Visible = open
+        self.toggleButton.Visible = toggle
+        self.closeButton.Visible = close
+        self.maximizeButton.Visible = maximize
+    end
+    
+    function library:ExpandSections()
+        if not self.focusedPage then return end
+        for _, section in pairs(self.focusedPage.sections) do
+            local padding, size = 4, (4 * padding) + section.container.Title.AbsoluteSize.Y
+            for _, module in pairs(section.modules) do size = size + module.AbsoluteSize.Y + padding end
+            utility:Tween(section.container.Parent, {Size = UDim2.new(1, -10, 0, size)}, 0.1)
+            utility:Tween(section.container.Title, {TextTransparency = 0}, 0.1)
+        end
+    end
+    
+    function library:CollapseSections()
+        if not self.focusedPage then return end
+        for _, section in pairs(self.focusedPage.sections) do
+            utility:Tween(section.container.Parent, {Size = UDim2.new(1, -10, 0, 28)}, 0.1)
+            utility:Tween(section.container.Title, {TextTransparency = 1}, 0.1)
+        end
     end
 
     -- new modules

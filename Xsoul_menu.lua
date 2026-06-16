@@ -176,7 +176,7 @@ do
         local dragInput, mousePos, framePos
 
         frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 mousePos = input.Position
                 framePos = parent.Position
@@ -190,7 +190,7 @@ do
         end)
 
         frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
                 dragInput = input
             end
         end)
@@ -231,8 +231,9 @@ do
             utility:Create("ImageLabel", {
                 Name = "Main",
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.25, 0, 0.052435593, 0),
-                Size = UDim2.new(0, 511, 0, 390),
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Size = UDim2.new(0.3, 0, 0.45, 0),
                 Image = "rbxassetid://4641149554",
                 ImageColor3 = themes.Background,
                 ScaleType = Enum.ScaleType.Slice,
@@ -380,8 +381,9 @@ Position = UDim2.new(0, 0, 0, 100),
             Parent = container,
             BackgroundTransparency = 0,
             BackgroundColor3 = themes.TopBarColor,
-            Position = UDim2.new(0.25, 0, 0.052435593, 0),
-            Size = UDim2.new(0, 50, 0, 50),
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Size = UDim2.new(0, 40, 0, 40),
             ZIndex = 5,
             Image = "",
             AutoButtonColor = false,
@@ -448,16 +450,16 @@ Position = UDim2.new(0, 0, 0, 100),
             if lib.isMaximized then
                 -- Return to normal size
                 utility:Tween(container.Main, {
-                    Size = UDim2.new(0, 511, 0, 428),
-                    Position = lib.normalPosition or UDim2.new(0.25, 0, 0.052435593, 0)
+                    Size = UDim2.new(0.3, 0, 0.45, 0),
+                    Position = lib.normalPosition or UDim2.new(0.5, 0, 0.5, 0)
                 }, 0.3)
                 lib.isMaximized = false
             else
                 -- Maximize
                 lib.normalPosition = container.Main.Position
                 utility:Tween(container.Main, {
-                    Size = UDim2.new(1, -40, 1, -40),
-                    Position = UDim2.new(0, 20, 0, 20)
+                    Size = UDim2.new(0.95, 0, 0.9, 0),
+                    Position = UDim2.new(0.5, 0, 0.5, 0)
                 }, 0.3)
                 lib.isMaximized = true
             end
@@ -649,7 +651,7 @@ Position = UDim2.new(0, 0, 0, 100),
         if self.position then
             -- Opening menu
             utility:Tween(container, {
-                Size = UDim2.new(0, 511, 0, 428),
+                Size = UDim2.new(0.3, 0, 0.45, 0),
                 Position = self.position
             }, 0.2)
             wait(0.2)
@@ -688,8 +690,8 @@ Position = UDim2.new(0, 0, 0, 100),
             wait(0.2)
 
             utility:Tween(container, {
-                Size = UDim2.new(0, 511, 0, 0),
-                Position = self.position + UDim2.new(0, 0, 0, 428)
+                Size = UDim2.new(0.3, 0, 0, 0),
+                Position = self.position + UDim2.new(0, 0, 0.45, 0)
             }, 0.2)
             wait(0.2)
             

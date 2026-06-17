@@ -11,7 +11,10 @@ local CONFIG = {
     NORMAL_SIZE = isMobile and UDim2.new(0.75, 0, 0.75, 0) or UDim2.new(0.3, 0, 0.45, 0),
     MAX_SIZE = UDim2.new(0.95, 0, 0.9, 0),
     CENTER_POS = UDim2.new(0.5, 0, 0.5, 0),
-    TOPBAR_HEIGHT = 38
+    TOPBAR_HEIGHT = 38,
+    PAGES_WIDTH = isMobile and 100 or 126,
+    PAGES_OFFSET = isMobile and 108 or 134,
+    CONTENT_SIZE_OFFSET = isMobile and 116 or 142
 }
 
 -- themes
@@ -243,7 +246,7 @@ do
                     BackgroundTransparency = 1,
                     ClipsDescendants = true,
                     Position = UDim2.new(0, 0, 0, 38),
-                    Size = UDim2.new(0, 126, 1, -38),
+                    Size = UDim2.new(0, CONFIG.PAGES_WIDTH, 1, -38),
                     ZIndex = 3,
                     Image = "rbxassetid://5012534273",
                     ImageColor3 = themes.DarkContrast,
@@ -499,8 +502,8 @@ Position = UDim2.new(0, 0, 0, 100),
             Active = true,
             BackgroundTransparency = 1,
             BorderSizePixel = 0,
-            Position = UDim2.new(0, 134, 0, 46),
-            Size = UDim2.new(1, -142, 1, -56),
+            Position = UDim2.new(0, CONFIG.PAGES_OFFSET, 0, 46),
+            Size = UDim2.new(1, -CONFIG.CONTENT_SIZE_OFFSET, 1, -56),
             CanvasSize = UDim2.new(0, 0, 0, 0),
             ScrollBarThickness = 3,
             ScrollBarImageColor3 = themes.DarkContrast,
@@ -511,12 +514,10 @@ Position = UDim2.new(0, 0, 0, 100),
             Padding = UDim.new(0, 10),
             Parent = container, 
         })
-        --[[
 
         uilist:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
             container.CanvasSize = UDim2.new(0, 0, 0, uilist.AbsoluteContentSize.Y + 10)
-        end) 
-        ]]
+        end)
 
         return setmetatable({
             library = library,

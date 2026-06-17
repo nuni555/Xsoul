@@ -457,17 +457,19 @@ Position = UDim2.new(0, 0, 0, 100),
         lib.maximizeButton.Activated:Connect(function()
             if lib.isMaximized then
                 -- Return to normal size
+                local normalHeight = lib.isMobile and 280 or 428
                 utility:Tween(container.Main, {
-                    Size = UDim2.new(0, 511, 0, 428),
-                    Position = lib.normalPosition or UDim2.new(0.25, 0, 0.052435593, 0)
+                    Size = lib.windowSize + UDim2.new(0, 0, 0, normalHeight - lib.windowSize.Y.Offset),
+                    Position = lib.normalPosition or (lib.isMobile and UDim2.new(0.5, -160, 0.05, 0) or UDim2.new(0.25, 0, 0.052435593, 0))
                 }, 0.3)
                 lib.isMaximized = false
             else
-                -- Maximize
+                -- Maximize (almost full screen)
                 lib.normalPosition = container.Main.Position
+                local margin = lib.isMobile and 5 or 20
                 utility:Tween(container.Main, {
-                    Size = UDim2.new(1, -40, 1, -40),
-                    Position = UDim2.new(0, 20, 0, 20)
+                    Size = UDim2.new(1, -margin * 2, 1, -margin * 2),
+                    Position = UDim2.new(0, margin, 0, margin)
                 }, 0.3)
                 lib.isMaximized = true
             end

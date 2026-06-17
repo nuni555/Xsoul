@@ -701,9 +701,15 @@ Position = UDim2.new(0, 0, 0, 100),
             wait(0.2)
             
             self.openButton.Visible = true
+            self.openButton.Title.Visible = true
             self.toggleButton.Visible = false
             self.closeButton.Visible = false
             self.maximizeButton.Visible = false
+            
+            -- Hide focused page container when closing
+            if self.focusedPage then
+                self.focusedPage.container.Visible = false
+            end
             
             -- Collapse all sections in the focused page
             if self.focusedPage then

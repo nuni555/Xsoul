@@ -176,7 +176,7 @@ do
         local dragInput, mousePos, framePos
 
         frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 mousePos = input.Position
                 framePos = parent.Position
@@ -190,7 +190,7 @@ do
         end)
 
         frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
                 dragInput = input
             end
         end)
@@ -565,7 +565,8 @@ Position = UDim2.new(0, 0, 0, 100),
                 BackgroundTransparency = 1,
                 BorderSizePixel = 0,
                 Position = UDim2.new(0, 8, 0, 8),
-                Size = UDim2.new(1, -16, 1, -16)
+                Size = UDim2.new(1, -16, 1, -16),
+                ClipsDescendants = true
             }, {
             utility:Create("TextLabel", {
                 Name = "Title",
@@ -660,9 +661,15 @@ Position = UDim2.new(0, 0, 0, 100),
             container.ClipsDescendants = false
             self.position = nil
             self.openButton.Visible = false
+            self.openButton.Title.Visible = false
             self.toggleButton.Visible = true
             self.closeButton.Visible = true
             self.maximizeButton.Visible = true
+            
+            -- Ensure focused page container is visible
+            if self.focusedPage then
+                self.focusedPage.container.Visible = true
+            end
             
             -- Expand all sections in the focused page
             if self.focusedPage then
@@ -2188,8 +2195,13 @@ Position = UDim2.new(0, 0, 0, 100),
         local size = (4 * padding) + self.container.Title.AbsoluteSize.Y -- offset
 
         for i, module in pairs(self.modules) do
-            size = size + module.AbsoluteSize.Y + padding
+            if module and module.Parent then
+                size = size + module.AbsoluteSize.Y + padding
+            end
         end
+
+        -- Ensure minimum size
+        size = math.max(size, 28)
 
         if smooth then
             utility:Tween(self.container.Parent, {Size = UDim2.new(1, -10, 0, size)}, 0.05)

@@ -224,6 +224,13 @@ do
     -- new classes
 
     function library.new(title)
+        -- Detect mobile device
+        local isMobile = input.TouchEnabled
+
+        -- Set different sizes for mobile vs desktop
+        local windowSize = isMobile and UDim2.new(0, 320, 0, 280) or UDim2.new(0, 511, 0, 390)
+        local windowPosition = isMobile and UDim2.new(0.5, -160, 0.05, 0) or UDim2.new(0.25, 0, 0.052435593, 0)
+
         local container = utility:Create("ScreenGui", {
             Name = title,
             Parent = game.CoreGui
@@ -231,8 +238,8 @@ do
             utility:Create("ImageLabel", {
                 Name = "Main",
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.25, 0, 0.052435593, 0),
-                Size = UDim2.new(0, 511, 0, 390),
+                Position = windowPosition,
+                Size = windowSize,
                 Image = "rbxassetid://4641149554",
                 ImageColor3 = themes.Background,
                 ScaleType = Enum.ScaleType.Slice,
@@ -419,7 +426,9 @@ Position = UDim2.new(0, 0, 0, 100),
             toggleButton = container.Main.TopBar.ToggleButton,
             closeButton = container.Main.TopBar.CloseButton,
             position = container.Main.Position,
-            toggling = false
+            toggling = false,
+            isMobile = isMobile,
+            windowSize = windowSize
         }, library)
         
         -- Set initial state: menu is open, show toggle/close buttons
@@ -650,8 +659,9 @@ Position = UDim2.new(0, 0, 0, 100),
 
         if self.position then
             -- Opening menu
+            local openHeight = self.isMobile and 280 or 428
             utility:Tween(container, {
-                Size = UDim2.new(0, 511, 0, 428),
+                Size = self.windowSize + UDim2.new(0, 0, 0, openHeight - self.windowSize.Y.Offset),
                 Position = self.position
             }, 0.2)
             wait(0.2)
@@ -695,9 +705,10 @@ Position = UDim2.new(0, 0, 0, 100),
             utility:Tween(topbar, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
             wait(0.2)
 
+            local closeHeight = self.isMobile and 280 or 428
             utility:Tween(container, {
-                Size = UDim2.new(0, 511, 0, 0),
-                Position = self.position + UDim2.new(0, 0, 0, 428)
+                Size = UDim2.new(0, self.windowSize.X.Offset, 0, 0),
+                Position = self.position + UDim2.new(0, 0, 0, closeHeight)
             }, 0.2)
             wait(0.2)
             

@@ -678,6 +678,11 @@ Position = UDim2.new(0, 0, 0, 100),
             self.toggleButton.Visible = true
             self.closeButton.Visible = true
             self.maximizeButton.Visible = true
+
+            -- Reset maximized state when opening from collapsed
+            if self.isMaximized then
+                self.isMaximized = false
+            end
             
             -- Ensure focused page container is visible
             if self.focusedPage then

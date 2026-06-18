@@ -606,11 +606,61 @@
     /* ===== AVATAR FRAME (rank-based) ===== */
     .avatar-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
     .avatar-frame {
-      position: absolute; inset: -30%; pointer-events: none;
-      background-repeat: no-repeat; background-position: center; background-size: contain;
+      position: absolute;
+      top: -24%; right: -30%; bottom: -36%; left: -30%;
+      pointer-events: none;
+      background-repeat: no-repeat; background-position: center center; background-size: contain;
       filter: drop-shadow(0 0 8px rgba(255,255,255,0.15));
     }
     .avatar-wrap.has-frame .user-avatar { border-color: transparent !important; }
+
+    /* ===== RANK FRAME GLOW ANIMATIONS (platinum+) ===== */
+    @keyframes platinumFrameGlow {
+      0%,100% { filter: drop-shadow(0 0 4px #40e0d0) drop-shadow(0 0 0px #7fffd4); }
+      50%      { filter: drop-shadow(0 0 14px #40e0d0) drop-shadow(0 0 8px #7fffd480); }
+    }
+    @keyframes platinumFrameFloat {
+      0%,100% { transform: scale(1) rotate(0deg); }
+      33%     { transform: scale(1.025) rotate(0.6deg); }
+      66%     { transform: scale(0.978) rotate(-0.6deg); }
+    }
+    @keyframes diamondFrameGlow {
+      0%   { filter: drop-shadow(0 0 6px #7c5cfc) drop-shadow(0 0 0px #60a5fa); }
+      33%  { filter: drop-shadow(0 0 16px #a78bfa) drop-shadow(0 0 8px #60a5fa88); }
+      66%  { filter: drop-shadow(0 0 10px #60a5fa) drop-shadow(0 0 14px #7c5cfc88); }
+      100% { filter: drop-shadow(0 0 6px #7c5cfc) drop-shadow(0 0 0px #60a5fa); }
+    }
+    @keyframes diamondFrameSpin {
+      0%,100% { transform: scale(1) rotate(0deg); }
+      25%     { transform: scale(1.03) rotate(1deg); }
+      75%     { transform: scale(0.975) rotate(-1deg); }
+    }
+    @keyframes premiumFrameGlow {
+      0%   { filter: drop-shadow(0 0 8px #ff6eb4) drop-shadow(0 0 4px #c471ed); }
+      25%  { filter: drop-shadow(0 0 18px #c471ed) drop-shadow(0 0 10px #7c5cfc88); }
+      50%  { filter: drop-shadow(0 0 14px #7c5cfc) drop-shadow(0 0 8px #60a5fa88); }
+      75%  { filter: drop-shadow(0 0 18px #c471ed) drop-shadow(0 0 12px #ff6eb488); }
+      100% { filter: drop-shadow(0 0 8px #ff6eb4) drop-shadow(0 0 4px #c471ed); }
+    }
+    @keyframes premiumFramePulse {
+      0%,100% { transform: scale(1) rotate(0deg); }
+      20%     { transform: scale(1.035) rotate(0.8deg); }
+      50%     { transform: scale(1.018) rotate(-0.5deg); }
+      80%     { transform: scale(1.03) rotate(0.6deg); }
+    }
+
+    .avatar-wrap[data-frame="platinum"] .avatar-frame {
+      animation: platinumFrameGlow 2.8s ease-in-out infinite,
+                 platinumFrameFloat 4s ease-in-out infinite;
+    }
+    .avatar-wrap[data-frame="diamond"] .avatar-frame {
+      animation: diamondFrameGlow 2.4s ease-in-out infinite,
+                 diamondFrameSpin 5s ease-in-out infinite;
+    }
+    .avatar-wrap[data-frame="premium"] .avatar-frame {
+      animation: premiumFrameGlow 2s linear infinite,
+                 premiumFramePulse 3.5s ease-in-out infinite;
+    }
 
     /* Frame picker grid */
     .frame-grid {
@@ -671,19 +721,49 @@
       background: linear-gradient(135deg, #ffe566, #ffa500);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
+
+    /* ===== ANIMATED USERNAME (platinum+) ===== */
+    @keyframes platinumTextShimmer {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    @keyframes platinumTextBob {
+      0%,100% { transform: translateY(0px); }
+      50%     { transform: translateY(-2px); }
+    }
+    @keyframes diamondTextBob {
+      0%,100% { transform: translateY(0px) scale(1); }
+      50%     { transform: translateY(-2px) scale(1.04); }
+    }
+    @keyframes premiumTextBob {
+      0%,100% { transform: translateY(0px) scale(1); }
+      33%     { transform: translateY(-2px) scale(1.03); }
+      66%     { transform: translateY(-1px) scale(1.01); }
+    }
+
     .username-platinum {
-      background: linear-gradient(135deg, #40e0d0, #7fffd4);
+      background: linear-gradient(90deg, #40e0d0, #7fffd4, #a0f0e8, #40e0d0, #7fffd4);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; 
+      animation: platinumTextShimmer 3s linear infinite,
+                 platinumTextBob 2.5s ease-in-out infinite;
+      display: inline-block;
     }
     .username-diamond {
-      background: linear-gradient(135deg, #a78bfa, #60a5fa, #a78bfa);
+      background: linear-gradient(90deg, #a78bfa, #60a5fa, #c4b5fd, #818cf8, #60a5fa, #a78bfa);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-size: 200%; animation: titleShimmer 3s linear infinite;
+      background-size: 300%;
+      animation: titleShimmer 2.5s linear infinite,
+                 diamondTextBob 3s ease-in-out infinite;
+      display: inline-block;
     }
     .username-premium {
       background: linear-gradient(90deg, #ff6eb4, #c471ed, #7c5cfc, #60a5fa, #c471ed, #ff6eb4);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-size: 300%; animation: titleShimmer 2s linear infinite;
+      background-size: 300%;
+      animation: titleShimmer 1.8s linear infinite,
+                 premiumTextBob 2s ease-in-out infinite;
+      display: inline-block;
     }
 
     footer {

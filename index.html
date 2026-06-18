@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Xsoul Script</title>
+  <title>Xsoul Script Hub</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
@@ -20,7 +20,6 @@
       --sans: 'Space Grotesk', sans-serif;
       
       --google: #ea4335;
-      --facebook: #1877f2;
       --github: #24292f;
     }
 
@@ -34,6 +33,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       overflow-x: hidden;
     }
 
@@ -59,59 +59,99 @@
       z-index: 0;
     }
 
-    main {
-      position: relative;
-      z-index: 1;
-      width: min(720px, 95vw);
-      padding: 60px 0 80px;
+    /* สไตล์หน้าจอบังคับ Login ก่อนเข้าเว็บ */
+    #loginGate {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      width: min(440px, 90vw);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
-      gap: 40px;
+      gap: 24px;
     }
 
-    header { text-align: center; }
+    .auth-header { text-align: center; }
+    .auth-header h2 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #fff, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .auth-header p { color: var(--muted); font-size: 0.88rem; }
 
-    .badge {
-      display: inline-block;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--accent2);
-      background: #c471ed18;
-      border: 1px solid #c471ed33;
-      border-radius: 999px;
-      padding: 4px 14px;
-      margin-bottom: 20px;
+    /* ฟอร์มกรอก User/Pass */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
-    h1 {
-      font-size: clamp(2.4rem, 7vw, 4rem);
-      font-weight: 700;
-      letter-spacing: -.02em;
-      line-height: 1.1;
-      background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .input-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .subtitle {
-      margin-top: 12px;
+    .input-field label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .input-field input {
+      background: #0e1120;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .input-field input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px var(--glow); }
+
+    .submit-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .submit-btn:hover { background: #6342e7; transform: translateY(-1px); }
+
+    .switch-mode-text {
+      text-align: center;
+      font-size: 0.82rem;
       color: var(--muted);
-      font-size: .95rem;
-      line-height: 1.6;
     }
+    .switch-mode-text span { color: var(--accent2); cursor: pointer; font-weight: 600; }
+    .switch-mode-text span:hover { text-decoration: underline; }
 
-    .login-container {
+    .divider {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      align-items: center;
+      text-align: center;
+      color: var(--border);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
-    
+    .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+    .divider:not(:empty)::before { margin-right: .5em; }
+    .divider:not(:empty)::after { margin-left: .5em; }
+
+    /* ปุ่ม Social */
     .login-buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
 
@@ -120,27 +160,41 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 12px 20px;
+      padding: 12px;
       border: 1px solid var(--border);
       border-radius: 12px;
       color: #fff;
       font-family: var(--sans);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
       background: #111420;
       transition: all 0.2s ease;
     }
-
-    .auth-btn svg { width: 18px; height: 18px; fill: currentColor; }
-    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    
+    .auth-btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .auth-btn:hover { transform: translateY(-2px); }
     .btn-google:hover { border-color: var(--google); background: #ea433515; color: #ff8b80; }
-    .btn-facebook:hover { border-color: var(--facebook); background: #1877f215; color: #7cb3ff; }
     .btn-github:hover { border-color: #fff; background: #ffffff10; }
 
+    /* หน้าเว็บหลักหลังล็อกอินสำเร็จ */
+    main {
+      position: relative;
+      z-index: 1;
+      width: min(720px, 95vw);
+      padding: 60px 0 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      display: none; /* ซ่อนไว้ก่อนล็อกอิน */
+    }
+
+    header { text-align: center; }
+    .badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent2); background: #c471ed18; border: 1px solid #c471ed33; border-radius: 999px; padding: 4px 14px; margin-bottom: 20px; }
+    h1 { font-size: clamp(2.4rem, 7vw, 4rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { margin-top: 12px; color: var(--muted); font-size: .95rem; line-height: 1.6; }
+
     .user-profile {
-      display: none; 
+      display: flex; 
       align-items: center;
       justify-content: space-between;
       background: #111420;
@@ -148,212 +202,98 @@
       border-radius: 14px;
       padding: 12px 20px;
     }
-
     .user-info { display: flex; align-items: center; gap: 12px; }
-    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
     .user-name { font-weight: 600; font-size: 0.95rem; }
     .user-email { font-size: 0.8rem; color: var(--muted); }
-
-    .logout-btn {
-      background: transparent;
-      border: 1px solid #ef444450;
-      color: #ef4444;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      font-family: var(--sans);
-      transition: all 0.2s;
-    }
+    .logout-btn { background: transparent; border: 1px solid #ef444450; color: #ef4444; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-family: var(--sans); transition: all 0.2s; }
     .logout-btn:hover { background: #ef444415; border-color: #ef4444; }
 
-    .stats {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
+    .stats { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 24px; text-align: center; min-width: 110px; }
+    .stat-value { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: .72rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
 
-    .stat {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 24px;
-      text-align: center;
-      min-width: 110px;
-    }
-
-    .stat-value {
-      font-family: var(--mono);
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .stat-label {
-      font-size: .72rem;
-      color: var(--muted);
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .card-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: .78rem;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .card-title::before {
-      content: '';
-      display: inline-block;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%,100% { opacity: 1; }
-      50%      { opacity: .4; }
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+    .card-title { display: flex; align-items: center; gap: 10px; font-size: .78rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .card-title::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s ease-in-out infinite; }
+    
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
 
     .script-wrapper { position: relative; }
-
-    .script-label {
-      font-size: .72rem;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-
-    .script-box {
-      background: #0e1120;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      font-family: var(--mono);
-      font-size: .82rem;
-      color: #a78bfa;
-      line-height: 1.7;
-      word-break: break-all;
-      min-height: 80px;
-    }
-
-    .copy-script-btn {
-      position: absolute;
-      top: 12px; right: 12px;
-      background: var(--border);
-      border: none;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-family: var(--sans);
-      font-size: .75rem;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all .2s;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
+    .script-label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .script-box { background: #0e1120; border: 1px solid var(--border); border-radius: 12px; padding: 20px; font-family: var(--mono); font-size: .82rem; color: #a78bfa; line-height: 1.7; word-break: break-all; min-height: 80px; }
+    
+    .copy-script-btn { position: absolute; top: 12px; right: 12px; background: var(--border); border: none; border-radius: 8px; padding: 6px 12px; font-family: var(--sans); font-size: .75rem; color: var(--muted); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px; }
     .copy-script-btn:hover { background: var(--accent); color: #fff; }
     .copy-script-btn.copied { background: #22c55e; color: #fff; }
 
-    .toast {
-      position: fixed;
-      bottom: 32px; right: 32px;
-      background: var(--card);
-      border: 1px solid var(--success);
-      border-radius: 12px;
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: .88rem;
-      color: var(--success);
-      box-shadow: 0 8px 30px #0004;
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all .3s cubic-bezier(.34,1.56,.64,1);
-      pointer-events: none;
-      z-index: 999;
-    }
-
+    .toast { position: fixed; bottom: 32px; right: 32px; background: var(--card); border: 1px solid var(--success); border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; gap: 10px; font-size: .88rem; color: var(--success); box-shadow: 0 8px 30px #0004; transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); pointer-events: none; z-index: 1000; }
     .toast.show { transform: translateY(0); opacity: 1; }
 
-    footer {
-      position: relative; z-index: 1;
-      text-align: center;
-      font-size: .78rem;
-      color: var(--muted);
-      padding-bottom: 40px;
-    }
-
+    footer { position: relative; z-index: 1; text-align: center; font-size: .78rem; color: var(--muted); padding-bottom: 40px; display: none; }
     footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
 
-<main>
+<div id="loginGate">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2 id="authTitle">Xsoul HUD</h2>
+      <p id="authDesc">กรุณาเข้าสู่ระบบบัญชีของคุณเพื่อเข้าใช้งาน</p>
+    </div>
+
+    <form id="emailAuthForm" onsubmit="handleEmailAuth(event)">
+      <div class="input-group">
+        <div class="input-field">
+          <label for="authEmail">อีเมล (Email)</label>
+          <input type="email" id="authEmail" required placeholder="example@xsoul.com">
+        </div>
+        <div class="input-field">
+          <label for="authPassword">รหัสผ่าน (Password)</label>
+          <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
+        </div>
+        <button type="submit" class="submit-btn" id="submitAuthBtn">เข้าสู่ระบบ</button>
+      </div>
+    </form>
+
+    <div class="switch-mode-text">
+      <span id="switchAuthMode" onclick="toggleAuthMode()">ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่</span>
+    </div>
+
+    <div class="divider">หรือเข้าสู่ระบบด้วย</div>
+
+    <div class="login-buttons">
+      <button class="auth-btn btn-google" onclick="loginWith('google')">
+        <svg viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/></svg>
+        Google
+      </button>
+      <button class="auth-btn btn-github" onclick="loginWith('github')">
+        <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        GitHub
+      </button>
+    </div>
+  </div>
+</div>
+
+<main id="mainContent">
   <header>
     <div class="badge">⚡ Roblox Script Hub</div>
     <h1>Xsoul</h1>
-    <p class="subtitle">Script executor &amp; loader — กรุณาล็อกอินก่อนเพื่อคัดลอกสคริปต์ใช้งาน</p>
+    <p class="subtitle">ยินดีต้อนรับเข้าสู่ระบบจัดการสคริปต์ระดับพรีเมียม</p>
   </header>
 
-  <!-- ส่วนระบบ Login -->
-  <div class="card" id="authSection">
-    <div class="card-title">🔐 เข้าสู่ระบบเพื่อใช้งานสคริปต์</div>
-    
-    <div class="login-container">
-      <!-- แสดงเมื่อยังไม่ได้ล็อกอิน -->
-      <div class="login-buttons" id="loginButtons">
-        <button class="auth-btn btn-google" onclick="loginWith('google')">
-          <svg viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/></svg>
-          Google
-        </button>
-        <button class="auth-btn btn-facebook" onclick="loginWith('facebook')">
-          <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          Facebook
-        </button>
-        <button class="auth-btn btn-github" onclick="loginWith('github')">
-          <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
-        </button>
-      </div>
-
-      <!-- แสดงเมื่อล็อกอินสำเร็จแล้ว -->
-      <div class="user-profile" id="userProfile">
-        <div class="user-info">
-          <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
-          <div>
-            <div class="user-name" id="userName">Guest</div>
-            <div class="user-email" id="userEmail">guest@xsoul.com</div>
-          </div>
-        </div>
-        <button class="logout-btn" onclick="logout()">Sign Out</button>
+  <div class="user-profile">
+    <div class="user-info">
+      <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar" id="userAvatar">
+      <div>
+        <div class="user-name" id="userName">User</div>
+        <div class="user-email" id="userEmail">user@xsoul.com</div>
       </div>
     </div>
+    <button class="logout-btn" onclick="logout()">Sign Out</button>
   </div>
 
   <div class="stats">
@@ -371,8 +311,7 @@
     </div>
   </div>
 
-  <!-- กล่องสคริปต์ (จะเปิดให้กดก๊อปปี้ตอนล็อกอินแล้วเท่านั้น) -->
-  <div class="card" id="scriptCard" style="opacity: 0.4; pointer-events: none; transition: all 0.3s;">
+  <div class="card">
     <div class="card-title">🗺️ Map ทำลายไข่เพื่อฟัก Brainrots!</div>
     <div class="script-wrapper">
       <div class="script-label">Lua Script</div>
@@ -387,7 +326,7 @@
   </div>
 </main>
 
-<footer>
+<footer id="mainFooter">
   Made with ♥ by <a href="#">Xsoul</a> &nbsp;·&nbsp; Roblox Script Hub
 </footer>
 
@@ -398,20 +337,20 @@
   <span id="toastText">คัดลอกแล้ว!</span>
 </div>
 
-<!-- ระบบจัดการ Firebase (ใช้ Config ของคุณเรียบร้อย) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { 
     getAuth, 
     signInWithPopup, 
     GoogleAuthProvider, 
-    FacebookAuthProvider, 
     GithubAuthProvider,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  // ใส่ข้อมูล Firebase Config ของคุณตรงนี้
+  // ใช้ Firebase Config เดิมของคุณ
   const firebaseConfig = {
     apiKey: "AIzaSyBUPSUB6Ic8lqKYC7FTRa_szjQmTFeXYlQ",
     authDomain: "xsoul-hud-21e3d.firebaseapp.com",
@@ -421,17 +360,75 @@
     appId: "1:442713199983:web:ce7c5f25e4771aa05cc49a"
   };
 
-  // เริ่มต้น Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
+  let isSignUpMode = false; // สำหรับสลับหน้าล็อกอิน / สมัครสมาชิก
+
   const providers = {
     google: new GoogleAuthProvider(),
-    facebook: new FacebookAuthProvider(),
     github: new GithubAuthProvider()
   };
 
-  // ฟังก์ชันสำหรับปุ่มเข้าสู่ระบบ
+  // 1. ระบบสลับโหมดล็อกอิน / สมัครสมาชิก
+  window.toggleAuthMode = () => {
+    isSignUpMode = !isSignUpMode;
+    const authTitle = document.getElementById('authTitle');
+    const authDesc = document.getElementById('authDesc');
+    const submitBtn = document.getElementById('submitAuthBtn');
+    const switchText = document.getElementById('switchAuthMode');
+
+    if (isSignUpMode) {
+      authTitle.textContent = "สร้างบัญชีใหม่";
+      authDesc.textContent = "กรอกอีเมลและตั้งรหัสผ่านเพื่อลงทะเบียนใช้งาน";
+      submitBtn.textContent = "สมัครสมาชิก";
+      switchText.textContent = "มีบัญชีอยู่แล้ว? เข้าสู่ระบบที่นี่";
+    } else {
+      authTitle.textContent = "Xsoul HUD";
+      authDesc.textContent = "กรุณาเข้าสู่ระบบบัญชีของคุณเพื่อเข้าใช้งาน";
+      submitBtn.textContent = "เข้าสู่ระบบ";
+      switchText.textContent = "ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่";
+    }
+  };
+
+  // 2. ฟังก์ชันจัดการการสมัคร / ล็อกอิน ผ่านอีเมลและรหัสผ่าน
+  window.handleEmailAuth = (e) => {
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+
+    if (isSignUpMode) {
+      // โหมดสมัครสมาชิก
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          showToast("สมัครสมาชิกและเข้าสู่ระบบสำเร็จ!");
+        })
+        .catch((error) => {
+          console.error("Sign Up Error:", error.message);
+          if (error.code === 'auth/email-already-in-use') {
+            showToast("อีเมลนี้ถูกใช้ไปแล้ว");
+          } else {
+            showToast("เกิดข้อผิดพลาดในการสมัครสมาชิก");
+          }
+        });
+    } else {
+      // โหมดเข้าสู่ระบบปกติ
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          showToast("ยินดีต้อนรับกลับมา!");
+        })
+        .catch((error) => {
+          console.error("Sign In Error:", error.message);
+          if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            showToast("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+          } else {
+            showToast("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+          }
+        });
+    }
+  };
+
+  // 3. ฟังก์ชันสำหรับปุ่ม Social Login (Google / GitHub)
   window.loginWith = (platform) => {
     const provider = providers[platform];
     if (!provider) return;
@@ -441,40 +438,44 @@
         showToast("เข้าสู่ระบบสำเร็จ!");
       })
       .catch((error) => {
-        console.error("Login Error:", error);
-        showToast("เกิดข้อผิดพลาดในการล็อกอิน");
+        console.error("Social Login Error:", error);
+        showToast("เกิดข้อผิดพลาด หรือโดเมนยังไม่ได้รับอนุญาต");
       });
   };
 
-  // ฟังก์ชันออกจากระบบ
+  // 4. ฟังก์ชันออกจากระบบ
   window.logout = () => {
     signOut(auth).then(() => {
-      showToast("ออกจากระบบแล้ว");
+      showToast("ออกจากระบบเรียบร้อย");
     });
   };
 
-  // ดักจับสถานะล็อกอินของผู้ใช้แบบ Realtime
+  // 5. ดักจับสถานะ เพื่อเปิด-ปิดระบบ บังคับล็อกอินก่อนเข้าหน้าเว็บหลัก
   onAuthStateChanged(auth, (user) => {
-    const loginButtons = document.getElementById('loginButtons');
-    const userProfile = document.getElementById('userProfile');
-    const scriptCard = document.getElementById('scriptCard');
+    const loginGate = document.getElementById('loginGate');
+    const mainContent = document.getElementById('mainContent');
+    const mainFooter = document.getElementById('mainFooter');
 
     if (user) {
-      // เมื่อล็อกอินแล้ว
-      loginButtons.style.display = 'none';
-      userProfile.style.display = 'flex';
-      scriptCard.style.opacity = '1';
-      scriptCard.style.pointerEvents = 'auto';
+      // ผู้ใช้ล็อกอินแล้ว -> ซ่อนหน้า Login Gate และแสดงตัวเว็บหลักทันที
+      loginGate.style.opacity = '0';
+      loginGate.style.visibility = 'hidden';
+      mainContent.style.display = 'flex';
+      mainFooter.style.display = 'block';
 
-      document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/40';
-      document.getElementById('userName').textContent = user.displayName || 'User';
-      document.getElementById('userEmail').textContent = user.email || '';
+      // ดึงข้อมูลผู้ใช้มาแสดงผลที่มุมบนเว็บ
+      document.getElementById('userAvatar').src = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user.uid;
+      document.getElementById('userName').textContent = user.displayName || user.email.split('@')[0];
+      document.getElementById('userEmail').textContent = user.email;
     } else {
-      // เมื่อยังไม่ล็อกอิน หรือออกจากระบบ
-      loginButtons.style.display = 'grid';
-      userProfile.style.display = 'none';
-      scriptCard.style.opacity = '0.4';
-      scriptCard.style.pointerEvents = 'none';
+      // ผู้ใช้ยังไม่ได้ล็อกอิน / ออกจากระบบ -> แสดงหน้า Login Gate ขวางไว้ บังคับล็อกอิน
+      loginGate.style.opacity = '1';
+      loginGate.style.visibility = 'visible';
+      mainContent.style.display = 'none';
+      mainFooter.style.display = 'none';
+      
+      // ล้างฟอร์มกรอกข้อมูลเก่า
+      document.getElementById('emailAuthForm').reset();
     }
   });
 

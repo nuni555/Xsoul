@@ -82,41 +82,38 @@ local function saveToLocal()
         end
         savedSettings.themes = themeData
         local json = http:JSONEncode(savedSettings)
-        -- Try simple file path first
-        local writeSuccess = pcall(function()
-            writefile(settingsFile, json)
-            print("Settings saved to: " .. settingsFile)
+        
+        -- Try workspace storage first (most reliable for Xeno/PC exploits)
+        local workspaceSuccess = pcall(function()
+            local folder = workspace:FindFirstChild("XsoulSettings")
+            if not folder then
+                folder = Instance.new("Folder")
+                folder.Name = "XsoulSettings"
+                folder.Parent = workspace
+            end
+            local value = folder:FindFirstChild("Settings")
+            if not value then
+                value = Instance.new("StringValue")
+                value.Name = "Settings"
+                value.Parent = folder
+            end
+            value.Value = json
+            print("Settings saved to workspace")
         end)
-        if not writeSuccess then
-            -- Try PlayerGui storage (more persistent in exploits)
-            pcall(function()
-                local playerGui = player:FindFirstChild("PlayerGui")
-                if playerGui then
-                    local folder = playerGui:FindFirstChild("XsoulSettings")
-                    if not folder then
-                        folder = Instance.new("Folder")
-                        folder.Name = "XsoulSettings"
-                        folder.Parent = playerGui
-                    end
-                    local value = folder:FindFirstChild("Settings")
-                    if not value then
-                        value = Instance.new("StringValue")
-                        value.Name = "Settings"
-                        value.Parent = folder
-                    end
-                    value.Value = json
-                    print("Settings saved to PlayerGui")
-                end
-            end)
+        
+        if workspaceSuccess then
+            return true
         end
-        if not writeSuccess then
-            -- Try workspace storage as final fallback
-            pcall(function()
-                local folder = workspace:FindFirstChild("XsoulSettings")
+        
+        -- Try PlayerGui storage as fallback
+        local playerGuiSuccess = pcall(function()
+            local playerGui = player:FindFirstChild("PlayerGui")
+            if playerGui then
+                local folder = playerGui:FindFirstChild("XsoulSettings")
                 if not folder then
                     folder = Instance.new("Folder")
                     folder.Name = "XsoulSettings"
-                    folder.Parent = workspace
+                    folder.Parent = playerGui
                 end
                 local value = folder:FindFirstChild("Settings")
                 if not value then
@@ -125,9 +122,26 @@ local function saveToLocal()
                     value.Parent = folder
                 end
                 value.Value = json
-                print("Settings saved to workspace")
-            end)
+                print("Settings saved to PlayerGui")
+            end
+        end)
+        
+        if playerGuiSuccess then
+            return true
         end
+        
+        -- Try simple file path as last resort (for Delta/mobile)
+        local fileSuccess = pcall(function()
+            writefile(settingsFile, json)
+            print("Settings saved to: " .. settingsFile)
+        end)
+        
+        if not fileSuccess then
+            warn("All save methods failed")
+            return false
+        end
+        
+        return true
     end)
     if not success then
         warn("Failed to save settings: " .. tostring(err))
@@ -136,16 +150,24 @@ end
 
 local function loadFromLocal()
     local success, data = pcall(function()
-        -- Try simple file path first
-        local fileExists = pcall(function()
-            return isfile(settingsFile)
+        -- Try workspace storage first (most reliable for Xeno/PC exploits)
+        local workspaceData = nil
+        local workspaceSuccess = pcall(function()
+            local folder = workspace:FindFirstChild("XsoulSettings")
+            if folder then
+                local value = folder:FindFirstChild("Settings")
+                if value and value.Value ~= "" then
+                    print("Settings loaded from workspace")
+                    workspaceData = http:JSONDecode(value.Value)
+                end
+            end
         end)
-        if fileExists then
-            local json = readfile(settingsFile)
-            print("Settings loaded from: " .. settingsFile)
-            return http:JSONDecode(json)
+        if workspaceSuccess and workspaceData then
+            return workspaceData
         end
-        -- Try PlayerGui storage
+        
+        -- Try PlayerGui storage as fallback
+        local playerGuiData = nil
         local playerGuiSuccess = pcall(function()
             local playerGui = player:FindFirstChild("PlayerGui")
             if playerGui then
@@ -154,30 +176,28 @@ local function loadFromLocal()
                     local value = folder:FindFirstChild("Settings")
                     if value and value.Value ~= "" then
                         print("Settings loaded from PlayerGui")
-                        return http:JSONDecode(value.Value)
+                        playerGuiData = http:JSONDecode(value.Value)
                     end
                 end
             end
-            return nil
         end)
-        if playerGuiSuccess then
-            return playerGuiSuccess
+        if playerGuiSuccess and playerGuiData then
+            return playerGuiData
         end
-        -- Try workspace storage
-        local workspaceSuccess = pcall(function()
-            local folder = workspace:FindFirstChild("XsoulSettings")
-            if folder then
-                local value = folder:FindFirstChild("Settings")
-                if value and value.Value ~= "" then
-                    print("Settings loaded from workspace")
-                    return http:JSONDecode(value.Value)
-                end
+        
+        -- Try simple file path as last resort (for Delta/mobile)
+        local fileData = nil
+        local fileSuccess = pcall(function()
+            if isfile(settingsFile) then
+                local json = readfile(settingsFile)
+                print("Settings loaded from: " .. settingsFile)
+                fileData = http:JSONDecode(json)
             end
-            return nil
         end)
-        if workspaceSuccess then
-            return workspaceSuccess
+        if fileSuccess and fileData then
+            return fileData
         end
+        
         return nil
     end)
     if success and data then
@@ -2019,7 +2039,7 @@ Position = UDim2.new(0, 0, 0, 100),
             end
         }
 
-        local callback = function(value)
+        local onColorChange = function(value)
             if callback then
                 callback(value, function(...)
                     self:updateColorPicker(colorpicker, ...)
@@ -2196,7 +2216,7 @@ Position = UDim2.new(0, 0, 0, 100),
         colorpicker.MouseButton1Click:Connect(toggleTab)
 
         tab.Container.Button.MouseButton1Click:Connect(function()
-            callback(color3)
+            onColorChange(color3)
             if colorKey then
                 saveColorPickerValue(colorKey, color3)
                 debouncedSave()
@@ -2340,7 +2360,7 @@ Position = UDim2.new(0, 0, 0, 100),
         
         local dragging, last
 
-        local callback = function(value)
+        local onSliderChange = function(value)
             if callback then
                 callback(value, function(...)
                     self:updateSlider(slider, ...)
@@ -2365,7 +2385,7 @@ Position = UDim2.new(0, 0, 0, 100),
                 utility:Tween(circle, {ImageTransparency = 0}, 0.1)
 
                 value = self:updateSlider(slider, nil, nil, min, max, value)
-                callback(value)
+                onSliderChange(value)
 
                 utility:Wait()
             end
@@ -2381,7 +2401,7 @@ Position = UDim2.new(0, 0, 0, 100),
         textbox.FocusLost:Connect(function()
             if not tonumber(textbox.Text) then
                 value = self:updateSlider(slider, nil, default or min, min, max)
-                callback(value)
+                onSliderChange(value)
             end
             if sliderKey then
                 saveSliderValue(sliderKey, value)
@@ -2396,7 +2416,7 @@ Position = UDim2.new(0, 0, 0, 100),
                 textbox.Text = text:sub(1, #text - 1)
             elseif not allowed[text] then
                 value = self:updateSlider(slider, nil, tonumber(text) or value, min, max)
-                callback(value)
+                onSliderChange(value)
                 if sliderKey then
                     saveSliderValue(sliderKey, value)
                     debouncedSave()
@@ -2412,7 +2432,7 @@ Position = UDim2.new(0, 0, 0, 100),
                 textbox.Text = text:sub(1, #text - 1)
             elseif not allowed[text] then
                 value = sel:updateSlider(slider, nil, tonumber(text) or value, min, max)
-                callback(value)
+                onSliderChange(value)
                 if sliderKey then
                     saveSliderValue(sliderKey, value)
                     debouncedSave()

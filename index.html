@@ -575,6 +575,40 @@
       transition: all 0.2s;
     }
 
+    /* User avatar border styles */
+    .user-avatar {
+      border-radius: 50%; border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    /* Rank-based username gradients */
+    .username-bronze {
+      background: linear-gradient(135deg, #e8a055, #cd7f32);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .username-silver {
+      background: linear-gradient(135deg, #b8c8e8, #8899bb);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .username-gold {
+      background: linear-gradient(135deg, #ffe566, #ffa500);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .username-platinum {
+      background: linear-gradient(135deg, #40e0d0, #7fffd4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .username-diamond {
+      background: linear-gradient(135deg, #a78bfa, #60a5fa, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; animation: titleShimmer 3s linear infinite;
+    }
+    .username-premium {
+      background: linear-gradient(90deg, #ff6eb4, #c471ed, #7c5cfc, #60a5fa, #c471ed, #ff6eb4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 300%; animation: titleShimmer 2s linear infinite;
+    }
+
     footer {
       position: relative; z-index: 1; text-align: center; font-size: .78rem;
       color: var(--muted); padding-bottom: 40px;
@@ -808,11 +842,11 @@
       <div class="user-dropdown" id="userDropdown">
         <div class="dropdown-header">
           <div class="dropdown-uname" id="dropdownName">User</div>
-          <div class="dropdown-email" id="dropdownEmail">user@xsoul.com</div>
+          <div class="dropdown-email" id="dropdownEmail">Username</div>
         </div>
         <button class="dropdown-item" onclick="event.stopPropagation(); openUserSettings()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          ตั้งค่าชื่อผู้ใช้
+          ตั้งค่ารูปโปรไฟล์
         </button>
         <button class="dropdown-item" onclick="event.stopPropagation(); showToast('โปรไฟล์ — coming soon')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -1069,25 +1103,30 @@
   <div class="user-settings-modal">
     <button class="user-settings-close" onclick="closeUserSettings()">✕</button>
     <div class="user-settings-header">
-      <h2 class="user-settings-title">ตั้งค่าชื่อผู้ใช้</h2>
-      <p class="user-settings-description">ปรับแต่งกรอบและสีของชื่อผู้ใช้ในเมนูบัญชี</p>
+      <h2 class="user-settings-title">ตั้งค่ารูปโปรไฟล์</h2>
+      <p class="user-settings-description">ปรับแต่งกรอบวงกลมรอบรูปโปรไฟล์</p>
     </div>
     <div class="settings-form">
       <div class="form-group">
-        <label class="form-label">สีของชื่อ</label>
-        <input type="color" id="nameTextColor" class="form-input" value="#e8eaf6">
-      </div>
-      <div class="form-group">
         <label class="form-label">สีขอบ</label>
-        <input type="color" id="nameBorderColor" class="form-input" value="#7c5cfc">
+        <input type="color" id="avatarBorderColor" class="form-input" value="#7c5cfc">
       </div>
       <div class="form-group">
         <label class="form-label">ความหนาขอบ (px)</label>
-        <input type="number" id="nameBorderWidth" class="form-input" value="1" min="0" max="5">
+        <input type="number" id="avatarBorderWidth" class="form-input" value="2" min="0" max="8">
+      </div>
+      <div class="form-group">
+        <label class="form-label">สไตล์ขอบ</label>
+        <select id="avatarBorderStyle" class="form-input">
+          <option value="solid">Solid (เส้นเดียว)</option>
+          <option value="dashed">Dashed (เส้นประ)</option>
+          <option value="dotted">Dotted (จุด)</option>
+          <option value="double">Double (เส้นคู่)</option>
+        </select>
       </div>
       <div class="settings-actions">
         <button class="btn btn-secondary" onclick="closeUserSettings()">ยกเลิก</button>
-        <button class="btn btn-primary" onclick="saveUserNameStyle()">บันทึก</button>
+        <button class="btn btn-primary" onclick="saveAvatarStyle()">บันทึก</button>
       </div>
     </div>
   </div>
@@ -1251,24 +1290,32 @@
       mainWrapper.style.display='flex'; footer.style.display='block'; sidebar.style.display='flex'; topNavbar.style.display='flex';
       if (window.innerWidth <= 768) mobileMenuBtn.style.display='flex';
       let name = user.email ? user.email.split('@')[0] : 'User';
+      let userRank = 'Bronze';
       try {
         const ud = await get(ref(db,`users/${user.uid}`));
-        if (ud.exists()) name = ud.val().username;
+        if (ud.exists()) {
+          name = ud.val().username;
+          userRank = ud.val().rank || 'Bronze';
+        }
       } catch {}
       const av = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed='+user.uid;
       document.getElementById('userAvatar').src = av;
       document.getElementById('userName').textContent = name;
       document.getElementById('dropdownName').textContent = name;
-      document.getElementById('dropdownEmail').textContent = user.email||'';
+      document.getElementById('dropdownEmail').textContent = name; // Display Username instead of Email
       
-      // Load user name style settings
+      // Apply rank-based gradient to username
+      const userNameEl = document.getElementById('userName');
+      userNameEl.className = 'chip-name username-' + userRank.toLowerCase();
+      
+      // Load avatar style settings
       try {
-        const ud = await get(ref(db,`users/${user.uid}/nameStyle`));
-        if (ud.exists()) {
-          const style = ud.val();
-          if (style.borderColor) document.getElementById('userName').style.borderColor = style.borderColor;
-          if (style.color) document.getElementById('userName').style.color = style.color;
-          if (style.borderWidth) document.getElementById('userName').style.borderWidth = style.borderWidth + 'px';
+        const as = await get(ref(db,`users/${user.uid}/avatarStyle`));
+        if (as.exists()) {
+          const style = as.val();
+          if (style.borderColor) document.getElementById('userAvatar').style.borderColor = style.borderColor;
+          if (style.borderWidth) document.getElementById('userAvatar').style.borderWidth = style.borderWidth + 'px';
+          if (style.borderStyle) document.getElementById('userAvatar').style.borderStyle = style.borderStyle;
         }
       } catch {}
     } else {
@@ -1403,26 +1450,25 @@
     document.getElementById('userSettingsModal').classList.remove('active');
   };
 
-  window.saveUserNameStyle = async () => {
-    const borderColor = document.getElementById('nameBorderColor').value;
-    const textColor = document.getElementById('nameTextColor').value;
-    const borderWidth = document.getElementById('nameBorderWidth').value;
+  window.saveAvatarStyle = async () => {
+    const borderColor = document.getElementById('avatarBorderColor').value;
+    const borderWidth = document.getElementById('avatarBorderWidth').value;
+    const borderStyle = document.getElementById('avatarBorderStyle').value;
 
-    const userNameEl = document.getElementById('userName');
-    userNameEl.style.borderColor = borderColor;
-    userNameEl.style.color = textColor;
-    userNameEl.style.borderWidth = borderWidth + 'px';
-    userNameEl.style.borderStyle = 'solid';
+    const userAvatarEl = document.getElementById('userAvatar');
+    userAvatarEl.style.borderColor = borderColor;
+    userAvatarEl.style.borderWidth = borderWidth + 'px';
+    userAvatarEl.style.borderStyle = borderStyle;
 
     try {
       const user = auth.currentUser;
       if (user) {
-        await set(ref(db, `users/${user.uid}/nameStyle`), {
+        await set(ref(db, `users/${user.uid}/avatarStyle`), {
           borderColor,
-          color: textColor,
-          borderWidth: parseInt(borderWidth)
+          borderWidth: parseInt(borderWidth),
+          borderStyle
         });
-        showToast('บันทึกการตั้งค่าชื่อผู้ใช้สำเร็จ!');
+        showToast('บันทึกการตั้งค่ารูปโปรไฟล์สำเร็จ!');
       }
     } catch (error) {
       showToast('บันทึกไม่สำเร็จ', true);

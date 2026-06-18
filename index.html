@@ -18,6 +18,10 @@
       --success: #4ade80;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Space Grotesk', sans-serif;
+      
+      --google: #ea4335;
+      --facebook: #1877f2;
+      --github: #24292f;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -98,6 +102,70 @@
       font-size: .95rem;
       line-height: 1.6;
     }
+
+    .login-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .login-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .auth-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #111420;
+      transition: all 0.2s ease;
+    }
+
+    .auth-btn svg { width: 18px; height: 18px; fill: currentColor; }
+    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    
+    .btn-google:hover { border-color: var(--google); background: #ea433515; color: #ff8b80; }
+    .btn-facebook:hover { border-color: var(--facebook); background: #1877f215; color: #7cb3ff; }
+    .btn-github:hover { border-color: #fff; background: #ffffff10; }
+
+    .user-profile {
+      display: none; 
+      align-items: center;
+      justify-content: space-between;
+      background: #111420;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 20px;
+    }
+
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); }
+    .user-name { font-weight: 600; font-size: 0.95rem; }
+    .user-email { font-size: 0.8rem; color: var(--muted); }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #ef444450;
+      color: #ef4444;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: all 0.2s;
+    }
+    .logout-btn:hover { background: #ef444415; border-color: #ef4444; }
 
     .stats {
       display: flex;
@@ -250,8 +318,43 @@
   <header>
     <div class="badge">⚡ Roblox Script Hub</div>
     <h1>Xsoul</h1>
-    <p class="subtitle">Script executor &amp; loader — ลิงก์สคริปต์ของคุณพร้อมแล้วคัดลอกและนำไปใช้งานได้เลย</p>
+    <p class="subtitle">Script executor &amp; loader — กรุณาล็อกอินก่อนเพื่อคัดลอกสคริปต์ใช้งาน</p>
   </header>
+
+  <!-- ส่วนระบบ Login -->
+  <div class="card" id="authSection">
+    <div class="card-title">🔐 เข้าสู่ระบบเพื่อใช้งานสคริปต์</div>
+    
+    <div class="login-container">
+      <!-- แสดงเมื่อยังไม่ได้ล็อกอิน -->
+      <div class="login-buttons" id="loginButtons">
+        <button class="auth-btn btn-google" onclick="loginWith('google')">
+          <svg viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/></svg>
+          Google
+        </button>
+        <button class="auth-btn btn-facebook" onclick="loginWith('facebook')">
+          <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          Facebook
+        </button>
+        <button class="auth-btn btn-github" onclick="loginWith('github')">
+          <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </button>
+      </div>
+
+      <!-- แสดงเมื่อล็อกอินสำเร็จแล้ว -->
+      <div class="user-profile" id="userProfile">
+        <div class="user-info">
+          <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+          <div>
+            <div class="user-name" id="userName">Guest</div>
+            <div class="user-email" id="userEmail">guest@xsoul.com</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </div>
 
   <div class="stats">
     <div class="stat">
@@ -268,7 +371,8 @@
     </div>
   </div>
 
-  <div class="card">
+  <!-- กล่องสคริปต์ (จะเปิดให้กดก๊อปปี้ตอนล็อกอินแล้วเท่านั้น) -->
+  <div class="card" id="scriptCard" style="opacity: 0.4; pointer-events: none; transition: all 0.3s;">
     <div class="card-title">🗺️ Map ทำลายไข่เพื่อฟัก Brainrots!</div>
     <div class="script-wrapper">
       <div class="script-label">Lua Script</div>
@@ -291,19 +395,112 @@
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <polyline points="20 6 9 17 4 12"/>
   </svg>
-  คัดลอกแล้ว!
+  <span id="toastText">คัดลอกแล้ว!</span>
 </div>
 
+<!-- ระบบจัดการ Firebase (ใช้ Config ของคุณเรียบร้อย) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getAuth, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    FacebookAuthProvider, 
+    GithubAuthProvider,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  // ใส่ข้อมูล Firebase Config ของคุณตรงนี้
+  const firebaseConfig = {
+    apiKey: "AIzaSyBUPSUB6Ic8lqKYC7FTRa_szjQmTFeXYlQ",
+    authDomain: "xsoul-hud-21e3d.firebaseapp.com",
+    projectId: "xsoul-hud-21e3d",
+    storageBucket: "xsoul-hud-21e3d.firebasestorage.app",
+    messagingSenderId: "442713199983",
+    appId: "1:442713199983:web:ce7c5f25e4771aa05cc49a"
+  };
+
+  // เริ่มต้น Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const providers = {
+    google: new GoogleAuthProvider(),
+    facebook: new FacebookAuthProvider(),
+    github: new GithubAuthProvider()
+  };
+
+  // ฟังก์ชันสำหรับปุ่มเข้าสู่ระบบ
+  window.loginWith = (platform) => {
+    const provider = providers[platform];
+    if (!provider) return;
+
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        showToast("เข้าสู่ระบบสำเร็จ!");
+      })
+      .catch((error) => {
+        console.error("Login Error:", error);
+        showToast("เกิดข้อผิดพลาดในการล็อกอิน");
+      });
+  };
+
+  // ฟังก์ชันออกจากระบบ
+  window.logout = () => {
+    signOut(auth).then(() => {
+      showToast("ออกจากระบบแล้ว");
+    });
+  };
+
+  // ดักจับสถานะล็อกอินของผู้ใช้แบบ Realtime
+  onAuthStateChanged(auth, (user) => {
+    const loginButtons = document.getElementById('loginButtons');
+    const userProfile = document.getElementById('userProfile');
+    const scriptCard = document.getElementById('scriptCard');
+
+    if (user) {
+      // เมื่อล็อกอินแล้ว
+      loginButtons.style.display = 'none';
+      userProfile.style.display = 'flex';
+      scriptCard.style.opacity = '1';
+      scriptCard.style.pointerEvents = 'auto';
+
+      document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/40';
+      document.getElementById('userName').textContent = user.displayName || 'User';
+      document.getElementById('userEmail').textContent = user.email || '';
+    } else {
+      // เมื่อยังไม่ล็อกอิน หรือออกจากระบบ
+      loginButtons.style.display = 'grid';
+      userProfile.style.display = 'none';
+      scriptCard.style.opacity = '0.4';
+      scriptCard.style.pointerEvents = 'none';
+    }
+  });
+
+  window.showToast = (text) => {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+</script>
+
 <script>
+  // ฟังก์ชันก๊อปปี้สคริปต์ลง Clipboard
   function copyScript() {
     const text = document.getElementById('brainrotScript').textContent;
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('copyBtn');
       btn.classList.add('copied');
       btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
-      document.getElementById('toast').classList.add('show');
+      
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = "คัดลอกแล้ว!";
+      toast.classList.add('show');
+      
       setTimeout(() => {
-        document.getElementById('toast').classList.remove('show');
+        toast.classList.remove('show');
         btn.classList.remove('copied');
         btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
       }, 2000);

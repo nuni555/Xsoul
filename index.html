@@ -614,20 +614,20 @@
       position: relative;
       display: inline-flex; align-items: center; justify-content: center;
       width: 42px; height: 42px;
-      flex-shrink: 0; overflow: visible;
+      flex-shrink: 0; overflow: hidden;
+      border-radius: 50%;
     }
     .user-avatar { position: relative; z-index: 1; flex-shrink: 0; }
     .avatar-frame {
       position: absolute;
-      width: 157%; height: 157%;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      width: 100%; height: 100%;
+      top: 0; left: 0;
       pointer-events: none; z-index: 2;
       background-repeat: no-repeat;
       background-position: center center;
-      background-size: contain;
+      background-size: cover;
+      border-radius: 50%;
       filter: drop-shadow(0 0 6px rgba(255,255,255,0.12));
-      clip-path: circle(50% at 50% 50%);
     }
     .avatar-wrap.has-frame .user-avatar { border-color: transparent !important; }
 
@@ -637,9 +637,9 @@
       50%      { filter: drop-shadow(0 0 14px #40e0d0) drop-shadow(0 0 8px #7fffd480); }
     }
     @keyframes platinumFrameFloat {
-      0%,100% { transform: translate(-50%,-50%) scale(1) rotate(0deg); }
-      33%     { transform: translate(-50%,-50%) scale(1.025) rotate(0.6deg); }
-      66%     { transform: translate(-50%,-50%) scale(0.978) rotate(-0.6deg); }
+      0%,100% { transform: scale(1) rotate(0deg); }
+      33%     { transform: scale(1.025) rotate(0.6deg); }
+      66%     { transform: scale(0.978) rotate(-0.6deg); }
     }
     @keyframes diamondFrameGlow {
       0%   { filter: drop-shadow(0 0 6px #7c5cfc) drop-shadow(0 0 0px #60a5fa); }
@@ -648,9 +648,9 @@
       100% { filter: drop-shadow(0 0 6px #7c5cfc) drop-shadow(0 0 0px #60a5fa); }
     }
     @keyframes diamondFrameSpin {
-      0%,100% { transform: translate(-50%,-50%) scale(1) rotate(0deg); }
-      25%     { transform: translate(-50%,-50%) scale(1.03) rotate(1deg); }
-      75%     { transform: translate(-50%,-50%) scale(0.975) rotate(-1deg); }
+      0%,100% { transform: scale(1) rotate(0deg); }
+      25%     { transform: scale(1.03) rotate(1deg); }
+      75%     { transform: scale(0.975) rotate(-1deg); }
     }
     @keyframes premiumFrameGlow {
       0%   { filter: drop-shadow(0 0 8px #ff6eb4) drop-shadow(0 0 4px #c471ed); }
@@ -660,10 +660,10 @@
       100% { filter: drop-shadow(0 0 8px #ff6eb4) drop-shadow(0 0 4px #c471ed); }
     }
     @keyframes premiumFramePulse {
-      0%,100% { transform: translate(-50%,-50%) scale(1) rotate(0deg); }
-      20%     { transform: translate(-50%,-50%) scale(1.035) rotate(0.8deg); }
-      50%     { transform: translate(-50%,-50%) scale(1.018) rotate(-0.5deg); }
-      80%     { transform: translate(-50%,-50%) scale(1.03) rotate(0.6deg); }
+      0%,100% { transform: scale(1) rotate(0deg); }
+      20%     { transform: scale(1.035) rotate(0.8deg); }
+      50%     { transform: scale(1.018) rotate(-0.5deg); }
+      80%     { transform: scale(1.03) rotate(0.6deg); }
     }
 
     .avatar-wrap[data-frame="platinum"] .avatar-frame {
@@ -708,15 +708,13 @@
       border: 1px solid var(--border); border-radius: 18px;
       padding: 20px 24px; margin-bottom: 20px;
     }
-    /* fixed-size wrap so frame aligns perfectly with inset:0 */
+    /* fixed-size wrap so frame aligns perfectly */
     .frame-preview-avatar-wrap {
       position: relative; flex-shrink: 0;
-      /*
-        Wrap = same as avatar (80px). Frame overlay extends via transform.
-      */
       width: 80px; height: 80px;
       display: flex; align-items: center; justify-content: center;
-      overflow: visible;
+      overflow: hidden;
+      border-radius: 50%;
     }
     .frame-preview-img {
       width: 80px; height: 80px; border-radius: 50%;
@@ -726,16 +724,14 @@
     }
     .frame-preview-overlay {
       position: absolute;
-      /* 157% of 80px = 125.6px → Gold hole = 80px exactly ✓ */
-      width: 157%; height: 157%;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      width: 100%; height: 100%;
+      top: 0; left: 0;
       background-repeat: no-repeat;
       background-position: center center;
-      background-size: contain;
+      background-size: cover;
+      border-radius: 50%;
       pointer-events: none; z-index: 2;
       transition: background-image 0.25s;
-      clip-path: circle(50% at 50% 50%);
     }
     .frame-preview-info { flex: 1; }
     .frame-preview-rank-name {

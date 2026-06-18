@@ -556,7 +556,6 @@
       background: var(--card); border: 1px solid var(--border); border-radius: 24px;
       padding: 36px; width: min(720px, 95vw); max-height: 88vh; overflow-y: auto;
       transform: scale(0.9) translateY(20px); transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
-      position: relative;
     }
     .user-settings-overlay.active .user-settings-modal { transform: scale(1) translateY(0); }
     
@@ -711,19 +710,22 @@
     /* fixed-size wrap so frame aligns perfectly with inset:0 */
     .frame-preview-avatar-wrap {
       position: relative; flex-shrink: 0;
-      width: 100px; height: 100px;
+      /*
+        Wrap = same as avatar (80px). Frame overlay extends via transform.
+      */
+      width: 80px; height: 80px;
       display: flex; align-items: center; justify-content: center;
       overflow: visible;
     }
     .frame-preview-img {
-      width: 100px; height: 100px; border-radius: 50%;
+      width: 80px; height: 80px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
       box-shadow: 0 0 12px var(--glow);
       position: relative; z-index: 1; flex-shrink: 0;
     }
     .frame-preview-overlay {
       position: absolute;
-      /* 157% of 100px = 157px → Gold hole = 100px exactly ✓ */
+      /* 157% of 80px = 125.6px → Gold hole = 80px exactly ✓ */
       width: 157%; height: 157%;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -797,18 +799,6 @@
       color: var(--muted); font-size: 0.75rem;
     }
     .frame-option[data-frame="none"] .frame-preview::before { content: "ไม่ใช้กรอบ"; }
-
-    /* Avatar inside frame option card */
-    .frame-option-avatar {
-      position: absolute;
-      width: 63.7%; height: 63.7%;
-      border-radius: 50%; object-fit: cover;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 0; pointer-events: none;
-    }
-    .frame-option.locked .frame-option-avatar { filter: grayscale(1) brightness(0.45); opacity: 0.55; }
-    .frame-option[data-frame="none"] .frame-option-avatar { display: none; }
 
 
     /* Rank-based username gradients */
@@ -1149,9 +1139,13 @@
           <div class="dropdown-uname" id="dropdownName">User</div>
           <div class="dropdown-email" id="dropdownEmail">Username</div>
         </div>
-        <button class="dropdown-item" onclick="event.stopPropagation(); openUserSettings()">
+        <button class="dropdown-item" onclick="event.stopPropagation(); showToast('โปรไฟล์ — coming soon')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           โปรไฟล์
+        </button>
+        <button class="dropdown-item" onclick="event.stopPropagation(); openUserSettings()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          ตั้งค่า
         </button>
         <hr class="dropdown-divider">
         <button class="dropdown-item danger" onclick="event.stopPropagation(); logout()">
@@ -1404,7 +1398,7 @@
   <div class="user-settings-modal">
     <button class="user-settings-close" onclick="closeUserSettings()">✕</button>
     <div class="user-settings-header">
-      <h2 class="user-settings-title">โปรไฟล์</h2>
+      <h2 class="user-settings-title">ตั้งค่ารูปโปรไฟล์</h2>
       <p class="user-settings-description">เลือกกรอบโปรไฟล์ที่คุณได้ปลดล็อคตามแรงค์</p>
     </div>
     <div class="settings-form">
@@ -1753,12 +1747,6 @@
       const div = document.createElement('div');
       div.className = 'frame-option' + (unlocked ? '' : ' locked') + (current === f.key ? ' selected' : '');
       div.dataset.frame = f.key;
-
-      // Avatar photo shown inside frame card
-      const avatarImg = document.createElement('img');
-      avatarImg.className = 'frame-option-avatar';
-      avatarImg.src = document.getElementById('userAvatar')?.src || '';
-      div.appendChild(avatarImg);
 
       const preview = document.createElement('div');
       preview.className = 'frame-preview';

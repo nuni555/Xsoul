@@ -581,6 +581,53 @@
       transition: all 0.2s;
     }
 
+    /* ===== AVATAR FRAME (rank-based) ===== */
+    .avatar-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .avatar-frame {
+      position: absolute; inset: -55%; pointer-events: none;
+      background-repeat: no-repeat; background-position: center; background-size: contain;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.15));
+    }
+    .avatar-wrap.has-frame .user-avatar { border-color: transparent !important; }
+
+    /* Frame picker grid */
+    .frame-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .frame-option {
+      position: relative; aspect-ratio: 1/1; border-radius: 16px;
+      background: #0f1320; border: 1px solid var(--border); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; overflow: hidden;
+    }
+    .frame-option:hover:not(.locked) { transform: translateY(-2px); border-color: var(--accent); }
+    .frame-option.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 8px 24px var(--glow); }
+    .frame-option .frame-preview {
+      width: 90%; height: 90%;
+      background-repeat: no-repeat; background-position: center; background-size: contain;
+    }
+    .frame-option.locked { cursor: not-allowed; }
+    .frame-option.locked .frame-preview { filter: grayscale(1) brightness(0.45); opacity: 0.55; }
+    .frame-option .lock-overlay {
+      position: absolute; inset: 0; display: none;
+      align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+      background: rgba(8,10,18,0.55); color: var(--muted); font-size: 0.7rem; text-align: center;
+    }
+    .frame-option.locked .lock-overlay { display: flex; }
+    .frame-option .lock-overlay svg { width: 22px; height: 22px; }
+    .frame-option .frame-label {
+      position: absolute; bottom: 6px; left: 0; right: 0; text-align: center;
+      font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); font-family: var(--mono);
+    }
+    .frame-option.selected .frame-label { color: var(--accent); }
+    .frame-option[data-frame="none"] .frame-preview {
+      background: none; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 0.75rem;
+    }
+    .frame-option[data-frame="none"] .frame-preview::before { content: "ไม่ใช้กรอบ"; }
+
+
     /* Rank-based username gradients */
     .username-bronze {
       background: linear-gradient(135deg, #e8a055, #cd7f32);
@@ -835,7 +882,7 @@
   <div class="top-navbar-right">
     <div class="user-chip" id="userChip" onclick="toggleDropdown()">
       <div class="user-chip-inner">
-        <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+        <span class="avatar-wrap" id="userAvatarWrap"><img src="" alt="Avatar" class="user-avatar" id="userAvatar"><span class="avatar-frame" id="userAvatarFrame"></span></span>
         <span class="chip-name" id="userName">User</span>
         <svg class="chevron-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
@@ -1104,11 +1151,16 @@
     <button class="user-settings-close" onclick="closeUserSettings()">✕</button>
     <div class="user-settings-header">
       <h2 class="user-settings-title">ตั้งค่ารูปโปรไฟล์</h2>
-      <p class="user-settings-description">ปรับแต่งกรอบวงกลมรอบรูปโปรไฟล์</p>
+      <p class="user-settings-description">ปรับแต่งกรอบและขอบรอบรูปโปรไฟล์ของคุณ</p>
     </div>
     <div class="settings-form">
       <div class="form-group">
-        <label class="form-label">สีขอบ</label>
+        <label class="form-label">กรอบโปรไฟล์ตามแรงค์</label>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:10px;">ปลดล็อคกรอบเพิ่มเติมเมื่อคุณเลื่อนขั้นถึงแรงค์นั้น ๆ</p>
+        <div class="frame-grid" id="frameGrid"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">สีขอบ (ใช้เมื่อไม่มีกรอบ)</label>
         <input type="color" id="avatarBorderColor" class="form-input" value="#7c5cfc">
       </div>
       <div class="form-group">
@@ -1129,6 +1181,7 @@
         <button class="btn btn-primary" onclick="saveAvatarStyle()">บันทึก</button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -1318,6 +1371,17 @@
           if (style.borderStyle) document.getElementById('userAvatar').style.borderStyle = style.borderStyle;
         }
       } catch {}
+
+      // Set current rank and load avatar frame
+      window.__currentRank = userRank;
+      let savedFrame = 'none';
+      try {
+        const fr = await get(ref(db,`users/${user.uid}/avatarFrame`));
+        if (fr.exists()) savedFrame = fr.val() || 'none';
+      } catch {}
+      // If user no longer qualifies for saved frame, fall back
+      if (!window.canUseFrame(savedFrame, userRank)) savedFrame = 'none';
+      window.applyAvatarFrame(savedFrame);
     } else {
       gate.style.opacity='1'; gate.style.visibility='visible';
       mainWrapper.style.display='none'; footer.style.display='none'; sidebar.style.display='none'; topNavbar.style.display='none';
@@ -1332,6 +1396,100 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3500);
   };
+
+  // ===== Rank-based avatar frames =====
+  const FRAME_BASE = 'https://project--8b751208-0c19-4561-bc3e-5cf4348cebb8.lovable.app';
+  const RANK_ORDER = { bronze:0, silver:1, gold:2, platinum:3, diamond:4, premium:5, premiummax:5 };
+  const FRAMES = [
+    { key:'none',     label:'ไม่ใช้กรอบ', minRank:'bronze', url:'' },
+    { key:'bronze',   label:'Bronze',     minRank:'bronze',   url: FRAME_BASE + '/__l5e/assets-v1/98b20e9e-8565-4da3-bd10-4118bfef7f35/rank-bronze.png' },
+    { key:'silver',   label:'Silver',     minRank:'silver',   url: FRAME_BASE + '/__l5e/assets-v1/cf6b02d6-03b8-473b-9af7-b558fb368605/rank-silver.png' },
+    { key:'gold',     label:'Gold',       minRank:'gold',     url: FRAME_BASE + '/__l5e/assets-v1/702d2733-cd62-45ca-8c63-605ae618b142/rank-gold.png' },
+    { key:'platinum', label:'Platinum',   minRank:'platinum', url: FRAME_BASE + '/__l5e/assets-v1/ead66c35-b230-4940-b37a-bcb29a71986c/rank-platinum.png' },
+    { key:'diamond',  label:'Diamond',    minRank:'diamond',  url: FRAME_BASE + '/__l5e/assets-v1/48c75ef2-1b53-4fa8-b7a0-0a797cb8e908/rank-diamond.png' },
+    { key:'premium',  label:'PremiumMAX', minRank:'premium',  url: FRAME_BASE + '/__l5e/assets-v1/05bf6144-207e-4102-9e0d-21e61c44810d/rank-premium.png' },
+  ];
+  window.__FRAMES = FRAMES;
+  window.__RANK_ORDER = RANK_ORDER;
+
+  window.canUseFrame = (frameKey, rank) => {
+    const f = FRAMES.find(x => x.key === frameKey);
+    if (!f) return false;
+    const have = RANK_ORDER[(rank||'bronze').toLowerCase()] ?? 0;
+    const need = RANK_ORDER[f.minRank] ?? 0;
+    return have >= need;
+  };
+
+  window.applyAvatarFrame = (frameKey) => {
+    const wrap = document.getElementById('userAvatarWrap');
+    const fr = document.getElementById('userAvatarFrame');
+    if (!wrap || !fr) return;
+    const f = FRAMES.find(x => x.key === frameKey);
+    if (!f || f.key === 'none' || !f.url) {
+      fr.style.backgroundImage = '';
+      wrap.classList.remove('has-frame');
+      wrap.dataset.frame = 'none';
+    } else {
+      fr.style.backgroundImage = `url("${f.url}")`;
+      wrap.classList.add('has-frame');
+      wrap.dataset.frame = f.key;
+    }
+    window.__currentFrame = frameKey;
+  };
+
+  window.renderFrameGrid = () => {
+    const grid = document.getElementById('frameGrid');
+    if (!grid) return;
+    const rank = (window.__currentRank || 'Bronze');
+    const current = window.__currentFrame || 'none';
+    grid.innerHTML = '';
+    FRAMES.forEach(f => {
+      const unlocked = window.canUseFrame(f.key, rank);
+      const div = document.createElement('div');
+      div.className = 'frame-option' + (unlocked ? '' : ' locked') + (current === f.key ? ' selected' : '');
+      div.dataset.frame = f.key;
+      const preview = document.createElement('div');
+      preview.className = 'frame-preview';
+      if (f.url) preview.style.backgroundImage = `url("${f.url}")`;
+      div.appendChild(preview);
+      const label = document.createElement('div');
+      label.className = 'frame-label';
+      label.textContent = f.label;
+      div.appendChild(label);
+      const lock = document.createElement('div');
+      lock.className = 'lock-overlay';
+      lock.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>ปลดล็อคที่ ' + f.label + '</span>';
+      div.appendChild(lock);
+      div.addEventListener('click', async () => {
+        if (!window.canUseFrame(f.key, window.__currentRank)) {
+          showToast('ต้องเลื่อนขั้นถึงแรงค์ ' + f.label + ' ก่อนจึงจะใช้กรอบนี้ได้', true);
+          return;
+        }
+        window.applyAvatarFrame(f.key);
+        // update selected state
+        grid.querySelectorAll('.frame-option').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        // persist
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            await set(ref(db, `users/${user.uid}/avatarFrame`), f.key);
+            showToast('บันทึกกรอบ ' + f.label + ' แล้ว');
+          }
+        } catch (err) { showToast('บันทึกไม่สำเร็จ', true); }
+      });
+      grid.appendChild(div);
+    });
+  };
+
+  // Hook openUserSettings to render the grid each time it opens
+  const _origOpenUserSettings = window.openUserSettings;
+  window.openUserSettings = () => {
+    document.getElementById('userSettingsModal').classList.add('active');
+    const dd = document.getElementById('userDropdown'); if (dd) dd.classList.remove('open');
+    window.renderFrameGrid();
+  };
+
 </script>
 
 <script>

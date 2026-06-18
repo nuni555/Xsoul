@@ -19,8 +19,6 @@
       --error: #f87171;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Space Grotesk', sans-serif;
-      --google: #ea4335;
-      --github: #24292f;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,30 +35,45 @@
       overflow-x: hidden;
     }
 
+    /* Animated background grid */
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background: radial-gradient(ellipse 60% 40% at 20% 10%, #7c5cfc18 0%, transparent 60%), radial-gradient(ellipse 50% 30% at 80% 80%, #c471ed12 0%, transparent 60%);
+      background: radial-gradient(ellipse 60% 40% at 20% 10%, #7c5cfc18 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 30% at 80% 80%, #c471ed12 0%, transparent 60%);
       pointer-events: none; z-index: 0;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      0% { opacity: 0.7; }
+      100% { opacity: 1; }
     }
 
     body::after {
       content: '';
       position: fixed; inset: 0;
-      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 48px 48px; opacity: .18; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: .15; pointer-events: none; z-index: 0;
     }
 
+    /* Floating particles canvas */
+    #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* ===== LOGIN ===== */
     #loginGate {
       position: fixed; inset: 0; background: var(--bg); z-index: 999;
       display: flex; justify-content: center; align-items: center; overflow-y: auto; padding: 40px 0;
+      transition: opacity 0.4s, visibility 0.4s;
     }
-
     .auth-card {
       background: var(--card); border: 1px solid var(--border); border-radius: 24px;
-      padding: 40px; width: min(480px, 95vw); box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      padding: 40px; width: min(480px, 95vw); box-shadow: 0 20px 60px rgba(0,0,0,0.6);
       display: flex; flex-direction: column; gap: 24px; margin: auto;
+      animation: slideUp 0.5s ease;
     }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
     .auth-header { text-align: center; }
     .auth-header h2 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #fff, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -70,7 +83,6 @@
     .grid-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .input-field { display: flex; flex-direction: column; gap: 6px; position: relative; }
     .input-field label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-    
     .input-container { display: flex; position: relative; align-items: center; }
     .input-container input { width: 100%; }
 
@@ -78,11 +90,11 @@
       background: #0e1120; border: 1px solid var(--border); border-radius: 10px;
       padding: 12px 16px; color: #fff; font-family: var(--sans); font-size: 0.9rem; transition: all 0.2s;
     }
-    .input-field input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px var(--glow); }
+    .input-field input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 12px var(--glow); }
 
     .random-btn {
       position: absolute; right: 8px; background: var(--border); border: none;
-      color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: 600;
+      color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: 600; transition: all 0.2s;
     }
     .random-btn:hover { background: var(--accent); }
 
@@ -91,23 +103,24 @@
     .status-msg.error { color: var(--error); display: block; }
 
     .submit-btn {
-      background: var(--accent); color: #fff; border: none; border-radius: 10px;
-      padding: 14px; font-family: var(--sans); font-weight: 600; font-size: 0.95rem;
-      cursor: pointer; transition: all 0.2s; margin-top: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 10px;
+      padding: 14px; font-family: var(--sans); font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; transition: all 0.3s; margin-top: 10px; position: relative; overflow: hidden;
     }
-    .submit-btn:hover { background: #6342e7; transform: translateY(-1px); }
+    .submit-btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #fff2, transparent); opacity: 0; transition: opacity 0.3s; }
+    .submit-btn:hover::after { opacity: 1; }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px #7c5cfc55; }
 
     .switch-mode-text { text-align: center; font-size: 0.82rem; color: var(--muted); }
     .switch-mode-text span { color: var(--accent2); cursor: pointer; font-weight: 600; }
     .switch-mode-text span:hover { text-decoration: underline; }
 
-    .divider { display: flex; align-items: center; text-align: center; color: var(--border); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .divider { display: flex; align-items: center; text-align: center; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
     .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
     .divider:not(:empty)::before { margin-right: .5em; }
     .divider:not(:empty)::after { margin-left: .5em; }
 
     .login-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
     .auth-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px;
       border: 1px solid var(--border); border-radius: 12px; color: #fff; font-family: var(--sans);
@@ -115,42 +128,47 @@
     }
     .auth-btn svg { width: 16px; height: 16px; }
     .auth-btn:hover { transform: translateY(-2px); }
-    .btn-google:hover { border-color: var(--google); background: #ea433515; color: #ff8b80; }
+    .btn-google:hover { border-color: #ea4335; background: #ea433515; color: #ff8b80; }
     .btn-github:hover { border-color: #fff; background: #ffffff10; }
 
-    /* Navbar */
+    /* ===== NAVBAR ===== */
     .navbar {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 24px;
-      background: rgba(11,13,20,0.85); backdrop-filter: blur(12px);
+      padding: 10px 28px;
+      background: rgba(11,13,20,0.88); backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
-    .navbar-brand { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; }
+    .navbar-brand {
+      font-family: var(--mono); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.1em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
 
-    /* User chip */
-    .user-chip { position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .user-chip-inner { display: flex; align-items: center; gap: 8px; background: #161a27; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px 4px 4px; transition: border-color 0.2s; }
-    .user-chip-inner:hover { border-color: var(--accent); }
+    .user-chip { position: relative; display: flex; align-items: center; cursor: pointer; }
+    .user-chip-inner {
+      display: flex; align-items: center; gap: 8px;
+      background: #161a27; border: 1px solid var(--border);
+      border-radius: 999px; padding: 4px 12px 4px 4px; transition: all 0.2s;
+    }
+    .user-chip-inner:hover { border-color: var(--accent); box-shadow: 0 0 12px var(--glow); }
     .user-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); object-fit: cover; }
-    .user-name { font-weight: 600; font-size: 0.82rem; }
-    .chevron-icon { color: var(--muted); transition: transform 0.2s; }
+    .chip-name { font-weight: 600; font-size: 0.82rem; }
+    .chevron-icon { color: var(--muted); transition: transform 0.2s; margin-left: 2px; }
     .user-chip.open .chevron-icon { transform: rotate(180deg); }
 
-    /* Dropdown */
     .user-dropdown {
-      position: absolute; top: calc(100% + 8px); right: 0;
-      background: #161a27; border: 1px solid var(--border); border-radius: 14px;
-      min-width: 200px; overflow: hidden;
-      opacity: 0; visibility: hidden; transform: translateY(-8px);
-      transition: all 0.2s ease; z-index: 200;
+      position: absolute; top: calc(100% + 10px); right: 0;
+      background: #13172280; backdrop-filter: blur(20px);
+      border: 1px solid var(--border); border-radius: 16px;
+      min-width: 210px; overflow: hidden;
+      opacity: 0; visibility: hidden; transform: translateY(-8px) scale(0.97);
+      transition: all 0.22s cubic-bezier(.34,1.56,.64,1); z-index: 200;
     }
-    .user-chip.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
-
-    .dropdown-header { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-    .dropdown-uname { font-weight: 600; font-size: 0.85rem; }
-    .dropdown-email { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-
+    .user-chip.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+    .dropdown-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .dropdown-uname { font-weight: 700; font-size: 0.88rem; }
+    .dropdown-email { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
     .dropdown-item {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 16px; font-size: 0.83rem; color: var(--text);
@@ -163,42 +181,244 @@
     .dropdown-item.danger svg { opacity: 1; }
     .dropdown-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
-    main { position: relative; z-index: 1; width: min(720px, 95vw); padding: 80px 0 80px; display: flex; flex-direction: column; gap: 40px; display: none; }
+    /* ===== MAIN ===== */
+    main {
+      position: relative; z-index: 1; width: min(760px, 95vw);
+      padding: 100px 0 80px; display: flex; flex-direction: column; gap: 44px;
+    }
+
     header { text-align: center; }
-    .badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent2); background: #c471ed18; border: 1px solid #c471ed33; border-radius: 999px; padding: 4px 14px; margin-bottom: 20px; }
-    h1 { font-size: clamp(2.4rem, 7vw, 4rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .subtitle { margin-top: 12px; color: var(--muted); font-size: .95rem; line-height: 1.6; }
-    .user-email { font-size: 0.8rem; color: var(--muted); }
+    .badge {
+      display: inline-block; font-family: var(--mono); font-size: 11px;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--accent2);
+      background: #c471ed18; border: 1px solid #c471ed44; border-radius: 999px;
+      padding: 5px 16px; margin-bottom: 20px;
+      animation: badgePulse 3s ease-in-out infinite;
+    }
+    @keyframes badgePulse { 0%,100% { box-shadow: 0 0 0 0 #c471ed33; } 50% { box-shadow: 0 0 14px 4px #c471ed44; } }
 
-    .stats { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 24px; text-align: center; min-width: 110px; }
-    .stat-value { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
-    .stat-label { font-size: .72rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
+    h1 {
+      font-size: clamp(2.8rem, 8vw, 4.4rem); font-weight: 700;
+      letter-spacing: -.03em; line-height: 1.05;
+      background: linear-gradient(135deg, #fff 20%, #c471ed 60%, #7c5cfc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: titleShimmer 4s linear infinite;
+      background-size: 200% 100%;
+    }
+    @keyframes titleShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+    .subtitle { margin-top: 14px; color: var(--muted); font-size: .95rem; line-height: 1.7; }
 
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 20px; }
-    .card-title { display: flex; align-items: center; gap: 10px; font-size: .78rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-    .card-title::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    /* ===== STATS ===== */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .stat {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px 20px; text-align: center;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      animation: fadeInUp 0.5s ease both;
+    }
+    .stat:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 8px 28px var(--glow); }
+    .stat:nth-child(1) { animation-delay: 0.1s; }
+    .stat:nth-child(2) { animation-delay: 0.2s; }
+    .stat:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .stat-value { font-family: var(--mono); font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: .72rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
+
+    /* ===== RANK SECTION ===== */
+    .section-title {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted); display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+    }
+    .section-title::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent2); box-shadow: 0 0 8px var(--accent2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+    .ranks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    .rank-card {
+      position: relative; border-radius: 20px; padding: 24px 18px;
+      border: 1px solid transparent; overflow: hidden;
+      cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease both;
+    }
+    .rank-card:nth-child(1) { animation-delay: 0.1s; }
+    .rank-card:nth-child(2) { animation-delay: 0.2s; }
+    .rank-card:nth-child(3) { animation-delay: 0.3s; }
+    .rank-card:nth-child(4) { animation-delay: 0.4s; }
+    .rank-card:nth-child(5) { animation-delay: 0.5s; }
+    .rank-card:nth-child(6) { animation-delay: 0.6s; }
+    .rank-card:hover { transform: translateY(-6px) scale(1.02); }
+
+    /* Shimmer sweep animation */
+    .rank-card::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+      transition: left 0.6s ease;
+      pointer-events: none; z-index: 1;
+    }
+    .rank-card:hover::before { left: 150%; }
+
+    .rank-icon { font-size: 2.4rem; margin-bottom: 10px; display: block; animation: iconFloat 3s ease-in-out infinite; }
+    @keyframes iconFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .rank-card:nth-child(2) .rank-icon { animation-delay: 0.4s; }
+    .rank-card:nth-child(3) .rank-icon { animation-delay: 0.8s; }
+    .rank-card:nth-child(4) .rank-icon { animation-delay: 1.2s; }
+    .rank-card:nth-child(5) .rank-icon { animation-delay: 1.6s; }
+    .rank-card:nth-child(6) .rank-icon { animation-delay: 2s; }
+
+    .rank-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+    .rank-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.65; font-family: var(--mono); margin-bottom: 12px; }
+    .rank-perks { list-style: none; font-size: 0.78rem; display: flex; flex-direction: column; gap: 5px; }
+    .rank-perks li { display: flex; align-items: center; gap: 7px; opacity: 0.8; }
+    .rank-perks li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .rank-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-family: var(--mono); font-size: 0.62rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px; letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* BRONZE */
+    .rank-bronze { background: linear-gradient(135deg, #1a1208, #2a1e0e); border-color: #cd7f3244; }
+    .rank-bronze:hover { box-shadow: 0 12px 40px #cd7f3244; border-color: #cd7f32aa; }
+    .rank-bronze .rank-name { color: #e8a055; }
+    .rank-bronze .rank-perks li::before { background: #cd7f32; }
+    .rank-bronze .rank-badge { background: #cd7f3222; color: #e8a055; border: 1px solid #cd7f3266; }
+
+    /* SILVER */
+    .rank-silver { background: linear-gradient(135deg, #131620, #1a1f30); border-color: #8899bb44; }
+    .rank-silver:hover { box-shadow: 0 12px 40px #8899bb44; border-color: #8899bbaa; }
+    .rank-silver .rank-name { color: #b8c8e8; }
+    .rank-silver .rank-perks li::before { background: #a0b4d0; }
+    .rank-silver .rank-badge { background: #8899bb22; color: #b8c8e8; border: 1px solid #8899bb66; }
+
+    /* GOLD */
+    .rank-gold { background: linear-gradient(135deg, #1a1600, #261e00); border-color: #ffd70044; }
+    .rank-gold:hover { box-shadow: 0 12px 40px #ffd70044; border-color: #ffd700aa; }
+    .rank-gold .rank-name { background: linear-gradient(135deg, #ffe566, #ffa500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .rank-gold .rank-perks li::before { background: #ffd700; }
+    .rank-gold .rank-badge { background: #ffd70022; color: #ffe566; border: 1px solid #ffd70066; }
+    .rank-gold .rank-icon { animation: iconFloat 3s ease-in-out infinite, goldSpin 6s linear infinite; }
+    @keyframes goldSpin { 0%,100% { filter: drop-shadow(0 0 0 #ffd700); } 50% { filter: drop-shadow(0 0 10px #ffd700); } }
+
+    /* PLATINUM */
+    .rank-platinum { background: linear-gradient(135deg, #0e1520, #141e2e); border-color: #40e0d044; }
+    .rank-platinum:hover { box-shadow: 0 12px 40px #40e0d044; border-color: #40e0d0aa; }
+    .rank-platinum .rank-name { background: linear-gradient(135deg, #40e0d0, #7fffd4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .rank-platinum .rank-perks li::before { background: #40e0d0; }
+    .rank-platinum .rank-badge { background: #40e0d022; color: #40e0d0; border: 1px solid #40e0d066; }
+
+    /* DIAMOND */
+    .rank-diamond { background: linear-gradient(135deg, #0c0e20, #141830); border-color: #7c5cfc55; }
+    .rank-diamond:hover { box-shadow: 0 12px 40px #7c5cfc66; border-color: #7c5cfccc; }
+    .rank-diamond .rank-name { background: linear-gradient(135deg, #a78bfa, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200%; animation: titleShimmer 3s linear infinite; }
+    .rank-diamond .rank-perks li::before { background: #7c5cfc; box-shadow: 0 0 6px #7c5cfc; }
+    .rank-diamond .rank-badge { background: #7c5cfc22; color: #a78bfa; border: 1px solid #7c5cfc77; }
+    .rank-diamond .rank-icon { animation: iconFloat 3s ease-in-out infinite, diamondGlow 2s ease-in-out infinite; }
+    @keyframes diamondGlow { 0%,100% { filter: drop-shadow(0 0 0 #7c5cfc); } 50% { filter: drop-shadow(0 0 14px #7c5cfc); } }
+
+    /* PREMIUM MAX */
+    .rank-premium {
+      background: linear-gradient(135deg, #120828, #1a0a38, #0d1528);
+      border-color: #ff6eb488;
+      grid-column: span 3;
+    }
+    .rank-premium:hover { box-shadow: 0 16px 60px #c471ed66; border-color: #ff6eb4cc; }
+    .rank-premium .rank-name {
+      background: linear-gradient(90deg, #ff6eb4, #c471ed, #7c5cfc, #60a5fa, #c471ed, #ff6eb4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 300%; animation: titleShimmer 2s linear infinite;
+      font-size: 1.3rem;
+    }
+    .rank-premium .rank-perks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
+    .rank-premium .rank-perks li::before { background: #c471ed; box-shadow: 0 0 8px #c471ed; }
+    .rank-premium .rank-badge { background: linear-gradient(135deg, #ff6eb433, #c471ed33); color: #ff9ed4; border: 1px solid #c471ed66; }
+    .rank-premium .rank-icon { animation: iconFloat 3s ease-in-out infinite, premiumAura 2.5s ease-in-out infinite; font-size: 3rem; }
+    @keyframes premiumAura { 0%,100% { filter: drop-shadow(0 0 0 #c471ed); } 50% { filter: drop-shadow(0 0 20px #c471ed); } }
+
+    /* Stars for premium */
+    .rank-premium .stars {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    }
+    .rank-premium .star {
+      position: absolute; width: 3px; height: 3px; border-radius: 50%;
+      background: #fff; animation: starTwinkle var(--d) ease-in-out infinite;
+      animation-delay: var(--delay);
+    }
+    @keyframes starTwinkle {
+      0%,100% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 0.8; transform: scale(1.2); }
+    }
+
+    /* ===== SCRIPT CARD ===== */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 28px; display: flex; flex-direction: column; gap: 20px;
+      transition: border-color 0.3s;
+      animation: fadeInUp 0.6s ease both;
+    }
+    .card:hover { border-color: #7c5cfc55; }
+    .card-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    }
+    .card-title::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
 
     .script-wrapper { position: relative; }
     .script-label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-    .script-box { background: #0e1120; border: 1px solid var(--border); border-radius: 12px; padding: 20px; font-family: var(--mono); font-size: .82rem; color: #a78bfa; line-height: 1.7; word-break: break-all; min-height: 80px; }
-    
-    .copy-script-btn { position: absolute; top: 12px; right: 12px; background: var(--border); border: none; border-radius: 8px; padding: 6px 12px; font-family: var(--sans); font-size: .75rem; color: var(--muted); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px; }
-    .copy-script-btn:hover { background: var(--accent); color: #fff; }
+    .script-box {
+      background: #0a0d1a; border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 20px 20px 20px; font-family: var(--mono); font-size: .82rem;
+      color: #a78bfa; line-height: 1.7; word-break: break-all; min-height: 70px;
+    }
+    .copy-script-btn {
+      position: absolute; top: 12px; right: 12px; background: var(--border); border: none;
+      border-radius: 8px; padding: 6px 14px; font-family: var(--sans); font-size: .75rem;
+      color: var(--muted); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px;
+    }
+    .copy-script-btn:hover { background: var(--accent); color: #fff; box-shadow: 0 4px 14px var(--glow); }
     .copy-script-btn.copied { background: #22c55e; color: #fff; }
 
-    .toast { position: fixed; bottom: 32px; right: 32px; background: var(--card); border: 1px solid var(--success); border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; gap: 10px; font-size: .88rem; color: var(--success); box-shadow: 0 8px 30px #0004; transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); pointer-events: none; z-index: 1000; }
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px; background: #161a27ee;
+      backdrop-filter: blur(12px); border: 1px solid var(--success); border-radius: 14px;
+      padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+      font-size: .88rem; color: var(--success);
+      transform: translateY(80px); opacity: 0;
+      transition: all .4s cubic-bezier(.34,1.56,.64,1); pointer-events: none; z-index: 1000;
+    }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.error-toast { border-color: var(--error); color: var(--error); }
 
-    footer { position: relative; z-index: 1; text-align: center; font-size: .78rem; color: var(--muted); padding-bottom: 40px; display: none; }
+    footer {
+      position: relative; z-index: 1; text-align: center; font-size: .78rem;
+      color: var(--muted); padding-bottom: 40px;
+    }
     footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .ranks-grid { grid-template-columns: 1fr 1fr; }
+      .rank-premium { grid-column: span 2; }
+      .rank-premium .rank-perks { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(3,1fr); }
+    }
   </style>
 </head>
 <body>
 
+<canvas id="particles"></canvas>
+
+<!-- ===== LOGIN GATE ===== -->
 <div id="loginGate">
   <div class="auth-card">
     <div class="auth-header">
@@ -208,8 +428,7 @@
 
     <form id="emailAuthForm" onsubmit="event.preventDefault(); window.handleAuthSubmit();">
       <div class="input-group">
-        
-        <div id="signUpFields" style="display: none; flex-direction: column; gap: 14px;">
+        <div id="signUpFields" style="display:none; flex-direction:column; gap:14px;">
           <div class="input-field">
             <label for="regUsername">ชื่อผู้ใช้ (Username) <span style="color:var(--error)">*ใช้ได้เฉพาะ a-z, A-Z, 0-9, _, -</span></label>
             <div class="input-container">
@@ -218,7 +437,6 @@
             </div>
             <div id="usernameStatus" class="status-msg"></div>
           </div>
-
           <div class="grid-fields">
             <div class="input-field">
               <label for="regPhone">เบอร์โทรศัพท์</label>
@@ -229,13 +447,10 @@
               <input type="date" id="regBirth">
             </div>
           </div>
-
           <div class="input-field">
             <label for="regRef">รหัสแนะนำ (Referral Code)</label>
             <input type="text" id="regRef" placeholder="ระบุหรือไม่ก็ได้">
-            <div id="refStatus" class="status-msg"></div>
           </div>
-          
           <div class="divider">ข้อมูลการเข้าสู่ระบบ</div>
         </div>
 
@@ -243,18 +458,14 @@
           <label for="authEmail" id="labelEmail">อีเมล หรือ ชื่อผู้ใช้</label>
           <input type="text" id="authEmail" required placeholder="example@xsoul.com หรือ username">
         </div>
-        
         <div class="input-field">
-          <label for="authPassword" id="labelPassword">รหัสผ่าน (Password)</label>
+          <label for="authPassword">รหัสผ่าน (Password)</label>
           <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
         </div>
-
-        <div class="input-field" id="confirmPasswordFields" style="display: none;">
-          <label for="authConfirmPassword">ยืนยันรหัสผ่าน (Confirm Password)</label>
+        <div class="input-field" id="confirmPasswordFields" style="display:none;">
+          <label for="authConfirmPassword">ยืนยันรหัสผ่าน</label>
           <input type="password" id="authConfirmPassword" placeholder="••••••••">
-          <div id="passwordMatchStatus" class="status-msg"></div>
         </div>
-
         <button type="submit" class="submit-btn" id="submitAuthBtn">เข้าสู่ระบบ</button>
       </div>
     </form>
@@ -262,13 +473,10 @@
     <div class="switch-mode-text">
       <span id="switchAuthMode" onclick="toggleAuthMode()">ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่</span>
     </div>
-
     <div class="divider">หรือเข้าสู่ระบบด้วย</div>
-
     <div class="login-buttons">
-      <!-- ไอคอน Google แก้ไขแล้ว -->
       <button class="auth-btn btn-google" onclick="loginWith('google')">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 24 24" fill="none">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
@@ -286,14 +494,14 @@
   </div>
 </div>
 
-<!-- Navbar fixed top -->
+<!-- ===== NAVBAR ===== -->
 <nav class="navbar" id="mainNavbar" style="display:none;">
-  <span class="navbar-brand">⚡ XSOUL</span>
+  <span class="navbar-brand">⚡ XSOUL HUB</span>
   <div class="user-chip" id="userChip" onclick="toggleDropdown()">
     <div class="user-chip-inner">
-      <img src="https://via.placeholder.com/28" alt="Avatar" class="user-avatar" id="userAvatar">
-      <span class="user-name" id="userName">User</span>
-      <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+      <span class="chip-name" id="userName">User</span>
+      <svg class="chevron-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="user-dropdown" id="userDropdown">
       <div class="dropdown-header">
@@ -321,7 +529,8 @@
   </div>
 </nav>
 
-<main id="mainContent">
+<!-- ===== MAIN ===== -->
+<main id="mainContent" style="display:none;">
   <header>
     <div class="badge">⚡ Roblox Script Hub</div>
     <h1>Xsoul</h1>
@@ -343,6 +552,98 @@
     </div>
   </div>
 
+  <!-- RANK SECTION -->
+  <div>
+    <div class="section-title">ระบบ Rank ผู้ใช้งาน</div>
+    <p style="color:var(--muted);font-size:0.83rem;margin-bottom:20px;margin-top:6px;">อัปเกรด Rank ของคุณเพื่อปลดล็อกสิทธิ์พิเศษและสคริปต์เอกซ์คลูซีฟ</p>
+    <div class="ranks-grid">
+
+      <!-- BRONZE -->
+      <div class="rank-card rank-bronze" onclick="showToast('Bronze — ระดับเริ่มต้น')">
+        <span class="rank-badge">Free</span>
+        <span class="rank-icon">🥉</span>
+        <div class="rank-name">Bronze</div>
+        <div class="rank-label">ระดับเริ่มต้น</div>
+        <ul class="rank-perks">
+          <li>เข้าถึงสคริปต์พื้นฐาน</li>
+          <li>อัปเดตรายเดือน</li>
+          <li>Support ทั่วไป</li>
+        </ul>
+      </div>
+
+      <!-- SILVER -->
+      <div class="rank-card rank-silver" onclick="showToast('Silver — ระดับกลาง')">
+        <span class="rank-badge">Basic</span>
+        <span class="rank-icon">🥈</span>
+        <div class="rank-name">Silver</div>
+        <div class="rank-label">ระดับกลาง</div>
+        <ul class="rank-perks">
+          <li>สคริปต์ทั้งหมดของ Bronze</li>
+          <li>สคริปต์เพิ่มเติม 5 รายการ</li>
+          <li>อัปเดตรายสัปดาห์</li>
+        </ul>
+      </div>
+
+      <!-- GOLD -->
+      <div class="rank-card rank-gold" onclick="showToast('Gold — ระดับสูง ✨')">
+        <span class="rank-badge">Popular</span>
+        <span class="rank-icon">🥇</span>
+        <div class="rank-name">Gold</div>
+        <div class="rank-label">ระดับสูง</div>
+        <ul class="rank-perks">
+          <li>สคริปต์ทั้งหมดของ Silver</li>
+          <li>สคริปต์ Gold Exclusive</li>
+          <li>Priority Support</li>
+        </ul>
+      </div>
+
+      <!-- PLATINUM -->
+      <div class="rank-card rank-platinum" onclick="showToast('Platinum — ระดับพรีเมียม 💎')">
+        <span class="rank-badge">Pro</span>
+        <span class="rank-icon">💠</span>
+        <div class="rank-name">Platinum</div>
+        <div class="rank-label">ระดับพรีเมียม</div>
+        <ul class="rank-perks">
+          <li>สคริปต์ทั้งหมดของ Gold</li>
+          <li>Auto-Farm พิเศษ</li>
+          <li>อัปเดตรายวัน</li>
+        </ul>
+      </div>
+
+      <!-- DIAMOND -->
+      <div class="rank-card rank-diamond" onclick="showToast('Diamond — ระดับสูงสุด 💜')">
+        <span class="rank-badge">Elite</span>
+        <span class="rank-icon">💎</span>
+        <div class="rank-name">Diamond</div>
+        <div class="rank-label">ระดับสูงสุด</div>
+        <ul class="rank-perks">
+          <li>สคริปต์ทั้งหมดของ Platinum</li>
+          <li>Early Access สคริปต์ใหม่</li>
+          <li>24/7 VIP Support</li>
+        </ul>
+      </div>
+
+      <!-- PREMIUM MAX -->
+      <div class="rank-card rank-premium" onclick="showToast('PremiumMax — ระดับ GOD ⚡')">
+        <div class="stars" id="premiumStars"></div>
+        <span class="rank-badge">⚡ GOD TIER</span>
+        <span class="rank-icon">👑</span>
+        <div class="rank-name">PremiumMax</div>
+        <div class="rank-label" style="color:#c471ed99">ระดับสูงที่สุดในระบบ</div>
+        <ul class="rank-perks">
+          <li>สิทธิ์ทั้งหมดของ Diamond</li>
+          <li>Custom Script ตามสั่ง</li>
+          <li>Badge พิเศษในโปรไฟล์</li>
+          <li>ทดสอบ Beta ก่อนใคร</li>
+          <li>Discord VIP Role</li>
+          <li>ฟรีอัปเดตตลอดชีพ</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT CARD -->
   <div class="card">
     <div class="card-title">🗺️ Map ทำลายไข่เพื่อฟัก Brainrots!</div>
     <div class="script-wrapper">
@@ -358,20 +659,19 @@
   </div>
 </main>
 
-<footer id="mainFooter">
+<footer id="mainFooter" style="display:none;">
   Made with ♥ by <a href="#">Xsoul</a> &nbsp;·&nbsp; Roblox Script Hub
 </footer>
 
 <div class="toast" id="toast">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   <span id="toastText">คัดลอกแล้ว!</span>
 </div>
 
+<!-- ===== FIREBASE ===== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { 
+  import {
     getAuth, signInWithPopup, GoogleAuthProvider, GithubAuthProvider,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -384,226 +684,203 @@
     storageBucket: "xsoul-hud-21e3d.firebasestorage.app",
     messagingSenderId: "442713199983",
     appId: "1:442713199983:web:ce7c5f25e4771aa05cc49a",
-    // ✅ แก้ไข databaseURL เป็น asia-southeast1
     databaseURL: "https://xsoul-hud-21e3d-default-rtdb.asia-southeast1.firebasedatabase.app"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
-
   let isSignUpMode = false;
   let isUsernameValid = false;
+  const providers = { google: new GoogleAuthProvider(), github: new GithubAuthProvider() };
 
-  const providers = {
-    google: new GoogleAuthProvider(),
-    github: new GithubAuthProvider()
-  };
-
-  function validateAllowedChars(text) {
-    return /^[a-zA-Z0-9_-]+$/.test(text);
-  }
+  function validateAllowedChars(t) { return /^[a-zA-Z0-9_-]+$/.test(t); }
 
   window.generateRandomUsername = () => {
-    const prefixes = ['Xsoul', 'Shadow', 'Hunter', 'Ghost', 'Alpha', 'Viper', 'Cyber'];
-    const suffixes = ['Pro', 'GG', 'X', 'Zero', 'Slayer', 'King', 'God'];
-    const randomUser = `${prefixes[Math.floor(Math.random() * prefixes.length)]}_${suffixes[Math.floor(Math.random() * suffixes.length)]}${Math.floor(100 + Math.random() * 900)}`;
-    const input = document.getElementById('regUsername');
-    input.value = randomUser;
-    checkUsernameAvailability(randomUser);
+    const pre = ['Xsoul','Shadow','Hunter','Ghost','Alpha','Viper','Cyber'];
+    const suf = ['Pro','GG','X','Zero','Slayer','King','God'];
+    const u = `${pre[Math.floor(Math.random()*pre.length)]}_${suf[Math.floor(Math.random()*suf.length)]}${Math.floor(100+Math.random()*900)}`;
+    document.getElementById('regUsername').value = u;
+    checkUsernameAvailability(u);
   };
 
   async function checkUsernameAvailability(username) {
-    const statusMsg = document.getElementById('usernameStatus');
-    if (!username) { statusMsg.style.display = "none"; isUsernameValid = false; return; }
-    
-    if (username.length < 4) {
-      statusMsg.textContent = "❌ ชื่อผู้ใช้ต้องยาว 4 ตัวอักษรขึ้นไป";
-      statusMsg.className = "status-msg error";
-      isUsernameValid = false;
-      return;
-    }
-    if (!validateAllowedChars(username)) {
-      statusMsg.textContent = "❌ ใช้ได้เฉพาะภาษาอังกฤษ ตัวเลข และ _ กับ - เท่านั้น";
-      statusMsg.className = "status-msg error";
-      isUsernameValid = false;
-      return;
-    }
-
+    const s = document.getElementById('usernameStatus');
+    if (!username) { s.style.display='none'; isUsernameValid=false; return; }
+    if (username.length < 4) { s.textContent='❌ ต้องยาว 4 ตัวขึ้นไป'; s.className='status-msg error'; isUsernameValid=false; return; }
+    if (!validateAllowedChars(username)) { s.textContent='❌ ภาษาอังกฤษ/ตัวเลข/_ เท่านั้น'; s.className='status-msg error'; isUsernameValid=false; return; }
     try {
-      const snapshot = await get(ref(db, `usernames/${username.toLowerCase()}`));
-      if (snapshot.exists()) {
-        statusMsg.textContent = "❌ ชื่อผู้ใช้นี้มีคนใช้ไปแล้ว";
-        statusMsg.className = "status-msg error";
-        isUsernameValid = false;
-      } else {
-        statusMsg.textContent = "✓ ชื่อผู้ใช้นี้สามารถใช้งานได้";
-        statusMsg.className = "status-msg success";
-        isUsernameValid = true;
-      }
-    } catch (err) {
-      statusMsg.textContent = "❌ ติดปัญหาฐานข้อมูล: " + err.message;
-      statusMsg.className = "status-msg error";
-      isUsernameValid = false;
-    }
+      const snap = await get(ref(db, `usernames/${username.toLowerCase()}`));
+      if (snap.exists()) { s.textContent='❌ ชื่อนี้มีคนใช้แล้ว'; s.className='status-msg error'; isUsernameValid=false; }
+      else { s.textContent='✓ ใช้งานได้'; s.className='status-msg success'; isUsernameValid=true; }
+    } catch(err) { s.textContent='❌ DB Error: '+err.message; s.className='status-msg error'; isUsernameValid=false; }
   }
 
-  document.getElementById('regUsername').addEventListener('input', (e) => {
-    checkUsernameAvailability(e.target.value.trim());
-  });
+  document.getElementById('regUsername').addEventListener('input', e => checkUsernameAvailability(e.target.value.trim()));
 
   window.toggleAuthMode = () => {
     isSignUpMode = !isSignUpMode;
-    document.getElementById('authTitle').textContent = isSignUpMode ? "สร้างบัญชีใหม่" : "Xsoul HUD";
-    document.getElementById('authDesc').textContent = isSignUpMode ? "กรอกข้อมูลเพื่อเปิดสิทธิ์ใช้งาน" : "กรุณาเข้าสู่ระบบบัญชีของคุณ";
-    document.getElementById('submitAuthBtn').textContent = isSignUpMode ? "สมัครสมาชิก" : "เข้าสู่ระบบ";
-    document.getElementById('switchAuthMode').textContent = isSignUpMode ? "มีบัญชีอยู่แล้ว? เข้าสู่ระบบที่นี่" : "ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่";
-    document.getElementById('signUpFields').style.display = isSignUpMode ? "flex" : "none";
-    document.getElementById('confirmPasswordFields').style.display = isSignUpMode ? "flex" : "none";
+    document.getElementById('authTitle').textContent = isSignUpMode ? 'สร้างบัญชีใหม่' : 'Xsoul HUD';
+    document.getElementById('authDesc').textContent = isSignUpMode ? 'กรอกข้อมูลเพื่อเปิดสิทธิ์' : 'กรุณาเข้าสู่ระบบบัญชีของคุณ';
+    document.getElementById('submitAuthBtn').textContent = isSignUpMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+    document.getElementById('switchAuthMode').textContent = isSignUpMode ? 'มีบัญชีแล้ว? เข้าสู่ระบบที่นี่' : 'ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่';
+    document.getElementById('signUpFields').style.display = isSignUpMode ? 'flex' : 'none';
+    document.getElementById('confirmPasswordFields').style.display = isSignUpMode ? 'flex' : 'none';
     document.getElementById('authConfirmPassword').required = isSignUpMode;
-    document.getElementById('labelEmail').textContent = isSignUpMode ? "อีเมลสำหรับใช้งาน (Email)" : "อีเมล หรือ ชื่อผู้ใช้";
-    document.getElementById('authEmail').placeholder = isSignUpMode ? "example@xsoul.com" : "example@xsoul.com หรือ username";
+    document.getElementById('labelEmail').textContent = isSignUpMode ? 'อีเมลสำหรับใช้งาน (Email)' : 'อีเมล หรือ ชื่อผู้ใช้';
+    document.getElementById('authEmail').placeholder = isSignUpMode ? 'example@xsoul.com' : 'example@xsoul.com หรือ username';
   };
 
   window.handleAuthSubmit = async () => {
     const loginOrEmail = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
-
     if (isSignUpMode) {
       const username = document.getElementById('regUsername').value.trim();
       const phone = document.getElementById('regPhone').value.trim();
       const birth = document.getElementById('regBirth').value;
       const refCode = document.getElementById('regRef').value.trim();
       const confirmPassword = document.getElementById('authConfirmPassword').value;
-
-      if (!isUsernameValid) {
-        showToast("ชื่อผู้ใช้ซ้ำหรือไม่ถูกต้อง กรุณาตรวจสอบข้อความสีแดงใต้ช่อง", true);
-        return;
-      }
-      if (password !== confirmPassword) {
-        showToast("รหัสผ่านทั้งสองช่องไม่ตรงกัน", true);
-        return;
-      }
-
+      if (!isUsernameValid) { showToast('ชื่อผู้ใช้ไม่ถูกต้อง', true); return; }
+      if (password !== confirmPassword) { showToast('รหัสผ่านไม่ตรงกัน', true); return; }
       createUserWithEmailAndPassword(auth, loginOrEmail, password)
-        .then(async (userCredential) => {
-          const user = userCredential.user;
-          await set(ref(db, 'users/' + user.uid), {
-            username: username, email: loginOrEmail, phone: phone, birthdate: birth, referrer: refCode || "none"
-          });
-          await set(ref(db, 'usernames/' + username.toLowerCase()), user.uid);
-          showToast("สมัครสมาชิกสำเร็จ!");
+        .then(async uc => {
+          const u = uc.user;
+          await set(ref(db,'users/'+u.uid), { username, email:loginOrEmail, phone, birthdate:birth, referrer:refCode||'none', rank:'Bronze' });
+          await set(ref(db,'usernames/'+username.toLowerCase()), u.uid);
+          showToast('สมัครสมาชิกสำเร็จ!');
         })
-        .catch((error) => {
-          showToast("สมัครไม่สำเร็จ: " + error.message, true);
-        });
-
+        .catch(e => showToast('สมัครไม่สำเร็จ: '+e.message, true));
     } else {
       let targetEmail = loginOrEmail;
       if (!loginOrEmail.includes('@')) {
         try {
-          const getUid = await get(ref(db, `usernames/${loginOrEmail.toLowerCase()}`));
-          if (getUid.exists()) {
-            const getUserData = await get(ref(db, `users/${getUid.val()}`));
-            if (getUserData.exists()) targetEmail = getUserData.val().email;
-          } else {
-            showToast("ไม่พบชื่อผู้ใช้นี้ในระบบ", true);
-            return;
-          }
-        } catch (err) {
-          showToast("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล", true);
-          return;
-        }
+          const uid = await get(ref(db,`usernames/${loginOrEmail.toLowerCase()}`));
+          if (uid.exists()) {
+            const ud = await get(ref(db,`users/${uid.val()}`));
+            if (ud.exists()) targetEmail = ud.val().email;
+          } else { showToast('ไม่พบชื่อผู้ใช้นี้', true); return; }
+        } catch { showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', true); return; }
       }
-
       signInWithEmailAndPassword(auth, targetEmail, password)
-        .then(() => showToast("ยินดีต้อนรับกลับมา!"))
-        .catch(() => showToast("อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง", true));
+        .then(() => showToast('ยินดีต้อนรับกลับมา!'))
+        .catch(() => showToast('อีเมล/รหัสผ่านไม่ถูกต้อง', true));
     }
   };
 
-  window.loginWith = (platform) => {
-    const provider = providers[platform];
-    if (!provider) return;
-    signInWithPopup(auth, provider)
-      .then(async (result) => {
-        const user = result.user;
-        const checkUser = await get(ref(db, `users/${user.uid}`));
-        if (!checkUser.exists()) {
-          const defaultUser = user.displayName
-            ? user.displayName.replace(/[^a-zA-Z0-9_-]/g, '') || "User_" + user.uid.substring(0, 5)
-            : "User_" + user.uid.substring(0, 5);
-          await set(ref(db, 'users/' + user.uid), { username: defaultUser, email: user.email, phone: "Social", birthdate: "Social", referrer: "none" });
-          await set(ref(db, 'usernames/' + defaultUser.toLowerCase()), user.uid);
+  window.loginWith = platform => {
+    const p = providers[platform];
+    if (!p) return;
+    signInWithPopup(auth, p)
+      .then(async r => {
+        const u = r.user;
+        const cu = await get(ref(db,`users/${u.uid}`));
+        if (!cu.exists()) {
+          const dn = u.displayName ? u.displayName.replace(/[^a-zA-Z0-9_-]/g,'') || 'User_'+u.uid.substring(0,5) : 'User_'+u.uid.substring(0,5);
+          await set(ref(db,'users/'+u.uid), { username:dn, email:u.email, phone:'Social', birthdate:'Social', referrer:'none', rank:'Bronze' });
+          await set(ref(db,'usernames/'+dn.toLowerCase()), u.uid);
         }
-        showToast("เข้าสู่ระบบสำเร็จ!");
+        showToast('เข้าสู่ระบบสำเร็จ!');
       })
-      .catch(() => showToast("ล็อกอินโซเชียลล้มเหลว หรือยกเลิกหน้าต่าง", true));
+      .catch(() => showToast('ล็อกอินโซเชียลล้มเหลว', true));
   };
 
-  window.logout = () => { signOut(auth).then(() => showToast("ออกจากระบบเรียบร้อย")); };
+  window.logout = () => signOut(auth).then(() => showToast('ออกจากระบบเรียบร้อย'));
 
-  onAuthStateChanged(auth, async (user) => {
-    const loginGate = document.getElementById('loginGate');
-    const mainContent = document.getElementById('mainContent');
-    const mainFooter = document.getElementById('mainFooter');
-    const mainNavbar = document.getElementById('mainNavbar');
-
+  onAuthStateChanged(auth, async user => {
+    const gate = document.getElementById('loginGate');
+    const main = document.getElementById('mainContent');
+    const footer = document.getElementById('mainFooter');
+    const nav = document.getElementById('mainNavbar');
     if (user) {
-      loginGate.style.opacity = '0';
-      loginGate.style.visibility = 'hidden';
-      mainContent.style.display = 'flex';
-      mainFooter.style.display = 'block';
-      mainNavbar.style.display = 'flex';
-      let displayUser = user.email ? user.email.split('@')[0] : 'User';
+      gate.style.opacity='0'; gate.style.visibility='hidden';
+      main.style.display='flex'; footer.style.display='block'; nav.style.display='flex';
+      let name = user.email ? user.email.split('@')[0] : 'User';
       try {
-        const getUserData = await get(ref(db, `users/${user.uid}`));
-        if (getUserData.exists()) displayUser = getUserData.val().username;
-      } catch(e) {}
-      const avatar = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user.uid;
-      document.getElementById('userAvatar').src = avatar;
-      document.getElementById('userName').textContent = displayUser;
-      document.getElementById('dropdownName').textContent = displayUser;
-      document.getElementById('dropdownEmail').textContent = user.email || '';
+        const ud = await get(ref(db,`users/${user.uid}`));
+        if (ud.exists()) name = ud.val().username;
+      } catch {}
+      const av = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed='+user.uid;
+      document.getElementById('userAvatar').src = av;
+      document.getElementById('userName').textContent = name;
+      document.getElementById('dropdownName').textContent = name;
+      document.getElementById('dropdownEmail').textContent = user.email||'';
     } else {
-      loginGate.style.opacity = '1';
-      loginGate.style.visibility = 'visible';
-      mainContent.style.display = 'none';
-      mainFooter.style.display = 'none';
-      mainNavbar.style.display = 'none';
+      gate.style.opacity='1'; gate.style.visibility='visible';
+      main.style.display='none'; footer.style.display='none'; nav.style.display='none';
     }
   });
 
-  window.showToast = (text, isError = false) => {
-    const toast = document.getElementById('toast');
-    const toastText = document.getElementById('toastText');
-    toastText.textContent = text;
-    if (isError) { toast.classList.add('error-toast'); } else { toast.classList.remove('error-toast'); }
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
+  window.showToast = (text, isError=false) => {
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    t.classList.toggle('error-toast', isError);
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
   };
 </script>
 
 <script>
-  function copyScript() {
-    navigator.clipboard.writeText(document.getElementById('brainrotScript').textContent).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.classList.add('copied');
-      btn.innerHTML = `✓ Copied!`;
-      setTimeout(() => {
-        btn.classList.remove('copied');
-        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
-      }, 2000);
+  /* Particles */
+  (function(){
+    const c = document.getElementById('particles');
+    const ctx = c.getContext('2d');
+    let W, H, dots=[];
+    function resize(){ W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    for(let i=0;i<55;i++) dots.push({
+      x:Math.random()*9999, y:Math.random()*9999,
+      r:Math.random()*1.5+0.4,
+      vx:(Math.random()-.5)*0.25, vy:(Math.random()-.5)*0.25,
+      a:Math.random(), da:(Math.random()*.006+.002)*(Math.random()<.5?1:-1),
+      col:Math.random()<.5?'#7c5cfc':'#c471ed'
+    });
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      dots.forEach(d=>{
+        d.x+=d.vx; d.y+=d.vy; d.a+=d.da;
+        if(d.x<0)d.x=W; if(d.x>W)d.x=0;
+        if(d.y<0)d.y=H; if(d.y>H)d.y=0;
+        if(d.a<0||d.a>1)d.da*=-1;
+        ctx.globalAlpha=d.a*.7;
+        ctx.beginPath();
+        ctx.arc(d.x%W, d.y%H, d.r, 0, Math.PI*2);
+        ctx.fillStyle=d.col;
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  /* Premium stars */
+  (function(){
+    const c = document.getElementById('premiumStars');
+    if(!c) return;
+    for(let i=0;i<18;i++){
+      const s = document.createElement('div');
+      s.className='star';
+      s.style.left=Math.random()*100+'%';
+      s.style.top=Math.random()*100+'%';
+      s.style.setProperty('--d', (2+Math.random()*3)+'s');
+      s.style.setProperty('--delay', (Math.random()*3)+'s');
+      c.appendChild(s);
+    }
+  })();
+
+  /* Copy script */
+  function copyScript(){
+    navigator.clipboard.writeText(document.getElementById('brainrotScript').textContent).then(()=>{
+      const btn=document.getElementById('copyBtn');
+      btn.classList.add('copied'); btn.textContent='✓ Copied!';
+      setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy'; },2000);
     });
   }
 
-  window.toggleDropdown = () => {
-    document.getElementById('userChip').classList.toggle('open');
-  };
-
-  document.addEventListener('click', (e) => {
-    const chip = document.getElementById('userChip');
-    if (chip && !chip.contains(e.target)) chip.classList.remove('open');
+  /* Dropdown */
+  window.toggleDropdown = ()=>{ document.getElementById('userChip').classList.toggle('open'); };
+  document.addEventListener('click', e=>{
+    const chip=document.getElementById('userChip');
+    if(chip&&!chip.contains(e.target)) chip.classList.remove('open');
   });
 </script>
 </body>

@@ -153,7 +153,7 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
     .user-chip-inner:hover { border-color: var(--accent); box-shadow: 0 0 18px var(--glow), 0 4px 20px rgba(124,92,252,0.2); }
-    .user-avatar { width: 42px; height: 42px; border-radius: 10px; border: 2px solid var(--accent); object-fit: cover; box-shadow: 0 0 10px var(--glow); }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; box-shadow: 0 0 10px var(--glow); }
     .chip-name { font-weight: 700; font-size: 1rem; letter-spacing: 0.01em; }
     .chevron-icon { color: var(--muted); transition: transform 0.2s; margin-left: 2px; }
     .user-chip.open .chevron-icon { transform: rotate(180deg); }
@@ -599,7 +599,7 @@
 
     /* User avatar border styles */
     .user-avatar {
-      border-radius: 10px; border: 2px solid transparent;
+      border-radius: 50%; border: 2px solid transparent;
       transition: all 0.2s;
     }
 
@@ -627,6 +627,7 @@
       background-position: center center;
       background-size: contain;
       filter: drop-shadow(0 0 6px rgba(255,255,255,0.12));
+      clip-path: circle(50% at 50% 50%);
     }
     .avatar-wrap.has-frame .user-avatar { border-color: transparent !important; }
 
@@ -718,7 +719,7 @@
       overflow: visible;
     }
     .frame-preview-img {
-      width: 80px; height: 80px; border-radius: 14px;
+      width: 80px; height: 80px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
       box-shadow: 0 0 12px var(--glow);
       position: relative; z-index: 1; flex-shrink: 0;
@@ -734,6 +735,7 @@
       background-size: contain;
       pointer-events: none; z-index: 2;
       transition: background-image 0.25s;
+      clip-path: circle(50% at 50% 50%);
     }
     .frame-preview-info { flex: 1; }
     .frame-preview-rank-name {
@@ -987,7 +989,7 @@
       .mobile-menu-btn { display: flex; }
       /* User chip compact on mobile */
       .chip-name { font-size: 0.88rem !important; }
-      .user-avatar { width: 34px !important; height: 34px !important; border-radius: 8px !important; }
+      .user-avatar { width: 34px !important; height: 34px !important; }
     }
 
     @media (max-width: 600px) {

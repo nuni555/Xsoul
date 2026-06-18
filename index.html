@@ -16,6 +16,7 @@
       --text: #e8eaf6;
       --muted: #6b7194;
       --success: #4ade80;
+      --error: #f87171;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Space Grotesk', sans-serif;
       
@@ -59,7 +60,6 @@
       z-index: 0;
     }
 
-    /* สไตล์หน้าจอบังคับ Login ก่อนเข้าเว็บ */
     #loginGate {
       position: fixed;
       inset: 0;
@@ -68,7 +68,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+      overflow-y: auto;
+      padding: 40px 0;
     }
 
     .auth-card {
@@ -76,31 +77,47 @@
       border: 1px solid var(--border);
       border-radius: 24px;
       padding: 40px;
-      width: min(440px, 90vw);
+      width: min(480px, 95vw);
       box-shadow: 0 20px 40px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
       gap: 24px;
+      margin: auto;
     }
 
     .auth-header { text-align: center; }
     .auth-header h2 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #fff, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .auth-header p { color: var(--muted); font-size: 0.88rem; }
 
-    /* ฟอร์มกรอก User/Pass */
     .input-group {
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
+    .grid-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
     .input-field {
       display: flex;
       flex-direction: column;
       gap: 6px;
+      position: relative;
     }
 
     .input-field label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    
+    .input-container {
+      display: flex;
+      position: relative;
+      align-items: center;
+    }
+
+    .input-container input { width: 100%; }
+
     .input-field input {
       background: #0e1120;
       border: 1px solid var(--border);
@@ -113,6 +130,29 @@
     }
     .input-field input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px var(--glow); }
 
+    .random-btn {
+      position: absolute;
+      right: 8px;
+      background: var(--border);
+      border: none;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .random-btn:hover { background: var(--accent); }
+
+    .status-msg {
+      font-size: 0.72rem;
+      margin-top: 2px;
+      font-weight: 500;
+      display: none;
+    }
+    .status-msg.success { color: var(--success); display: block; }
+    .status-msg.error { color: var(--error); display: block; }
+
     .submit-btn {
       background: var(--accent);
       color: #fff;
@@ -124,6 +164,7 @@
       font-size: 0.95rem;
       cursor: pointer;
       transition: all 0.2s;
+      margin-top: 10px;
     }
     .submit-btn:hover { background: #6342e7; transform: translateY(-1px); }
 
@@ -148,7 +189,6 @@
     .divider:not(:empty)::before { margin-right: .5em; }
     .divider:not(:empty)::after { margin-left: .5em; }
 
-    /* ปุ่ม Social */
     .login-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -176,7 +216,6 @@
     .btn-google:hover { border-color: var(--google); background: #ea433515; color: #ff8b80; }
     .btn-github:hover { border-color: #fff; background: #ffffff10; }
 
-    /* หน้าเว็บหลักหลังล็อกอินสำเร็จ */
     main {
       position: relative;
       z-index: 1;
@@ -185,7 +224,7 @@
       display: flex;
       flex-direction: column;
       gap: 40px;
-      display: none; /* ซ่อนไว้ก่อนล็อกอิน */
+      display: none;
     }
 
     header { text-align: center; }
@@ -245,16 +284,55 @@
       <p id="authDesc">กรุณาเข้าสู่ระบบบัญชีของคุณเพื่อเข้าใช้งาน</p>
     </div>
 
-    <form id="emailAuthForm" onsubmit="handleEmailAuth(event)">
+    <form id="emailAuthForm" onsubmit="handleAuthSubmit(event)">
       <div class="input-group">
-        <div class="input-field">
-          <label for="authEmail">อีเมล (Email)</label>
-          <input type="email" id="authEmail" required placeholder="example@xsoul.com">
+        
+        <div id="signUpFields" style="display: none; flex-direction: column; gap: 14px;">
+          <div class="input-field">
+            <label for="regUsername">ชื่อผู้ใช้ (Username) <span style="color:var(--error)">*ใช้ได้แค่ a-z, 0-9, _, -</span></label>
+            <div class="input-container">
+              <input type="text" id="regUsername" placeholder="เช่น xsoul_player" minlength="4">
+              <button type="button" class="random-btn" onclick="generateRandomUsername()">สุ่มชื่อ</button>
+            </div>
+            <div id="usernameStatus" class="status-msg"></div>
+          </div>
+
+          <div class="grid-fields">
+            <div class="input-field">
+              <label for="regPhone">เบอร์โทรศัพท์</label>
+              <input type="tel" id="regPhone" placeholder="0987654321" pattern="[0-9]{9,10}">
+            </div>
+            <div class="input-field">
+              <label for="regBirth">วันเกิด</label>
+              <input type="date" id="regBirth">
+            </div>
+          </div>
+
+          <div class="input-field">
+            <label for="regRef">รหัสแนะนำ (Referral Code)</label>
+            <input type="text" id="regRef" placeholder="กรอกรหัสแนะนำ (ระบุหรือไม่ก็ได้)">
+            <div id="refStatus" class="status-msg"></div>
+          </div>
+          
+          <div class="divider">ข้อมูลการเข้าสู่ระบบ</div>
         </div>
+
         <div class="input-field">
-          <label for="authPassword">รหัสผ่าน (Password)</label>
+          <label for="authEmail" id="labelEmail">อีเมล หรือ ชื่อผู้ใช้</label>
+          <input type="text" id="authEmail" required placeholder="example@xsoul.com หรือ username">
+        </div>
+        
+        <div class="input-field">
+          <label for="authPassword" id="labelPassword">รหัสผ่าน (Password)</label>
           <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
         </div>
+
+        <div class="input-field" id="confirmPasswordFields" style="display: none;">
+          <label for="authConfirmPassword">ยืนยันรหัสผ่าน (Confirm Password)</label>
+          <input type="password" id="authConfirmPassword" placeholder="••••••••" minlength="6">
+          <div id="passwordMatchStatus" class="status-msg"></div>
+        </div>
+
         <button type="submit" class="submit-btn" id="submitAuthBtn">เข้าสู่ระบบ</button>
       </div>
     </form>
@@ -349,133 +427,312 @@
     signOut,
     onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { 
+    getDatabase, 
+    ref, 
+    set, 
+    get, 
+    child 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // ใช้ Firebase Config เดิมของคุณ
   const firebaseConfig = {
     apiKey: "AIzaSyBUPSUB6Ic8lqKYC7FTRa_szjQmTFeXYlQ",
     authDomain: "xsoul-hud-21e3d.firebaseapp.com",
     projectId: "xsoul-hud-21e3d",
     storageBucket: "xsoul-hud-21e3d.firebasestorage.app",
     messagingSenderId: "442713199983",
-    appId: "1:442713199983:web:ce7c5f25e4771aa05cc49a"
+    appId: "1:442713199983:web:ce7c5f25e4771aa05cc49a",
+    databaseURL: "https://xsoul-hud-21e3d-default-rtdb.firebaseio.com"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getDatabase(app);
 
-  let isSignUpMode = false; // สำหรับสลับหน้าล็อกอิน / สมัครสมาชิก
+  let isSignUpMode = false;
+  let isUsernameValid = false;
 
   const providers = {
     google: new GoogleAuthProvider(),
     github: new GithubAuthProvider()
   };
 
-  // 1. ระบบสลับโหมดล็อกอิน / สมัครสมาชิก
+  // เช็คตัวอักษรแปลกๆ และช่องว่าง (RegEx ยอมรับแค่ a-z, A-Z, 0-9, _, -)
+  function validateAllowedChars(text) {
+    const regex = /^[a-zA-Z0-9_-]+$/;
+    return regex.test(text);
+  }
+
+  window.generateRandomUsername = () => {
+    const prefixes = ['Xsoul', 'Shadow', 'Hunter', 'Ghost', 'Alpha', 'Viper', 'Cyber', 'Striker', 'Titan', 'Phantom'];
+    const suffixes = ['Pro', 'GG', 'X', '99', 'Zero', 'Slayer', 'Rider', 'King', 'God', 'Void'];
+    const randPre = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randSuf = suffixes[Math.floor(Math.random() * suffixes.length)];
+    const randNum = Math.floor(100 + Math.random() * 900);
+    
+    const randomUser = `${randPre}_${randSuf}${randNum}`;
+    const input = document.getElementById('regUsername');
+    input.value = randomUser;
+    
+    checkUsernameAvailability(randomUser);
+  };
+
+  async function checkUsernameAvailability(username) {
+    const statusMsg = document.getElementById('usernameStatus');
+    
+    if(username.length < 4) {
+      statusMsg.textContent = "❌ ชื่อผู้ใช้ต้องยาว 4 ตัวอักษรขึ้นไป";
+      statusMsg.className = "status-msg error";
+      isUsernameValid = false;
+      return;
+    }
+
+    if(!validateAllowedChars(username)) {
+      statusMsg.textContent = "❌ ห้ามเว้นวรรคหรือใช้ตัวอักษรพิเศษ (ใช้ได้เฉพาะ a-z, 0-9, _, -)";
+      statusMsg.className = "status-msg error";
+      isUsernameValid = false;
+      return;
+    }
+
+    try {
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, `usernames/${username.toLowerCase()}`));
+      if (snapshot.exists()) {
+        statusMsg.textContent = "❌ ชื่อผู้ใช้นี้มีคนใช้ไปแล้ว";
+        statusMsg.className = "status-msg error";
+        isUsernameValid = false;
+      } else {
+        statusMsg.textContent = "✓ ชื่อผู้ใช้นี้สามารถใช้งานได้";
+        statusMsg.className = "status-msg success";
+        isUsernameValid = true;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  document.getElementById('regUsername').addEventListener('input', (e) => {
+    const val = e.target.value.trim();
+    checkUsernameAvailability(val);
+  });
+
+  // เช็คความตรงกันของรหัสผ่านแบบ Realtime ในหน้าสตรีม
+  function checkPasswordMatch() {
+    const pass = document.getElementById('authPassword').value;
+    const confirmPass = document.getElementById('authConfirmPassword').value;
+    const matchStatus = document.getElementById('passwordMatchStatus');
+
+    if(!confirmPass) {
+      matchStatus.style.display = 'none';
+      return;
+    }
+
+    if(pass === confirmPass) {
+      matchStatus.textContent = "✓ รหัสผ่านตรงกัน";
+      matchStatus.className = "status-msg success";
+    } else {
+      matchStatus.textContent = "❌ รหัสผ่านไม่ตรงกัน";
+      matchStatus.className = "status-msg error";
+    }
+  }
+
+  document.getElementById('authPassword').addEventListener('input', () => { if(isSignUpMode) checkPasswordMatch(); });
+  document.getElementById('authConfirmPassword').addEventListener('input', checkPasswordMatch);
+
   window.toggleAuthMode = () => {
     isSignUpMode = !isSignUpMode;
     const authTitle = document.getElementById('authTitle');
     const authDesc = document.getElementById('authDesc');
     const submitBtn = document.getElementById('submitAuthBtn');
     const switchText = document.getElementById('switchAuthMode');
+    const signUpFields = document.getElementById('signUpFields');
+    const confirmPasswordFields = document.getElementById('confirmPasswordFields');
+    const labelEmail = document.getElementById('labelEmail');
+    const labelPassword = document.getElementById('labelPassword');
+    const authEmailInput = document.getElementById('authEmail');
 
     if (isSignUpMode) {
       authTitle.textContent = "สร้างบัญชีใหม่";
-      authDesc.textContent = "กรอกอีเมลและตั้งรหัสผ่านเพื่อลงทะเบียนใช้งาน";
+      authDesc.textContent = "กรอกข้อมูลของคุณให้ครบถ้วนเพื่อเปิดสิทธิ์ใช้งาน";
       submitBtn.textContent = "สมัครสมาชิก";
       switchText.textContent = "มีบัญชีอยู่แล้ว? เข้าสู่ระบบที่นี่";
+      signUpFields.style.display = "flex";
+      confirmPasswordFields.style.display = "flex";
+      document.getElementById('authConfirmPassword').required = true;
+      labelEmail.textContent = "อีเมลสำหรับใช้งาน (Email)";
+      labelPassword.textContent = "ตั้งรหัสผ่าน (Password) *ใช้ได้แค่ a-z, 0-9, _, -";
+      authEmailInput.placeholder = "example@xsoul.com";
+      authEmailInput.type = "email";
     } else {
       authTitle.textContent = "Xsoul HUD";
       authDesc.textContent = "กรุณาเข้าสู่ระบบบัญชีของคุณเพื่อเข้าใช้งาน";
       submitBtn.textContent = "เข้าสู่ระบบ";
       switchText.textContent = "ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่";
+      signUpFields.style.display = "none";
+      confirmPasswordFields.style.display = "none";
+      document.getElementById('authConfirmPassword').required = false;
+      labelEmail.textContent = "อีเมล หรือ ชื่อผู้ใช้";
+      labelPassword.textContent = "รหัสผ่าน (Password)";
+      authEmailInput.placeholder = "example@xsoul.com หรือ username";
+      authEmailInput.type = "text";
     }
   };
 
-  // 2. ฟังก์ชันจัดการการสมัคร / ล็อกอิน ผ่านอีเมลและรหัสผ่าน
-  window.handleEmailAuth = (e) => {
+  window.handleAuthSubmit = async (e) => {
     e.preventDefault();
-    const email = document.getElementById('authEmail').value;
+    const loginOrEmail = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
 
     if (isSignUpMode) {
-      // โหมดสมัครสมาชิก
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          showToast("สมัครสมาชิกและเข้าสู่ระบบสำเร็จ!");
+      const username = document.getElementById('regUsername').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const birth = document.getElementById('regBirth').value;
+      const refCode = document.getElementById('regRef').value.trim();
+      const confirmPassword = document.getElementById('authConfirmPassword').value;
+
+      if (!isUsernameValid) {
+        showToast("กรุณาตั้งชื่อผู้ใช้ที่ถูกต้องและไม่ซ้ำก่อน");
+        return;
+      }
+
+      // ตรวจสอบอักษรพิเศษในรหัสผ่าน
+      if (!validateAllowedChars(password)) {
+        showToast("รหัสผ่านห้ามใช้ตัวอักษรพิเศษหรือเว้นวรรค (ใช้ได้แค่ a-z, 0-9, _, -)");
+        return;
+      }
+
+      // ตรวจสอบรหัสผ่าน 2 ช่องว่าตรงกันไหมก่อนส่ง
+      if (password !== confirmPassword) {
+        showToast("รหัสผ่านทั้งสองช่องไม่ตรงกัน");
+        return;
+      }
+
+      if(refCode) {
+        const refStatus = document.getElementById('refStatus');
+        try {
+          const dbRef = ref(db);
+          const checkRef = await get(child(dbRef, `usernames/${refCode.toLowerCase()}`));
+          if(!checkRef.exists() && refCode.toLowerCase() !== 'xsoul_admin') {
+            refStatus.textContent = "❌ ไม่พบรหัสแนะนำนี้ในระบบ";
+            refStatus.className = "status-msg error";
+            showToast("ไม่พบรหัสแนะนำนี้");
+            return;
+          }
+        } catch (err) { console.error(err); }
+      }
+
+      createUserWithEmailAndPassword(auth, loginOrEmail, password)
+        .then(async (userCredential) => {
+          const user = userCredential.user;
+          
+          await set(ref(db, 'users/' + user.uid), {
+            username: username,
+            email: loginOrEmail,
+            phone: phone,
+            birthdate: birth,
+            referrer: refCode || "none"
+          });
+
+          await set(ref(db, 'usernames/' + username.toLowerCase()), user.uid);
+          showToast("สมัครสมาชิกสำเร็จ!");
         })
         .catch((error) => {
-          console.error("Sign Up Error:", error.message);
-          if (error.code === 'auth/email-already-in-use') {
-            showToast("อีเมลนี้ถูกใช้ไปแล้ว");
-          } else {
-            showToast("เกิดข้อผิดพลาดในการสมัครสมาชิก");
-          }
+          showToast("เกิดข้อผิดพลาด: " + error.message);
         });
+
     } else {
-      // โหมดเข้าสู่ระบบปกติ
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+      let targetEmail = loginOrEmail;
+
+      if (!loginOrEmail.includes('@')) {
+        try {
+          const dbRef = ref(db);
+          const getUid = await get(child(dbRef, `usernames/${loginOrEmail.toLowerCase()}`));
+          if(getUid.exists()) {
+            const uid = getUid.val();
+            const getUserData = await get(child(dbRef, `users/${uid}`));
+            if(getUserData.exists()) {
+              targetEmail = getUserData.val().email;
+            }
+          } else {
+            showToast("ไม่พบชื่อผู้ใช้นี้ในระบบ");
+            return;
+          }
+        } catch (err) {
+          showToast("เกิดข้อผิดพลาดในการดึงข้อมูล");
+          return;
+        }
+      }
+
+      signInWithEmailAndPassword(auth, targetEmail, password)
+        .then(() => {
           showToast("ยินดีต้อนรับกลับมา!");
         })
-        .catch((error) => {
-          console.error("Sign In Error:", error.message);
-          if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            showToast("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-          } else {
-            showToast("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
-          }
+        .catch(() => {
+          showToast("อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง");
         });
     }
   };
 
-  // 3. ฟังก์ชันสำหรับปุ่ม Social Login (Google / GitHub)
   window.loginWith = (platform) => {
     const provider = providers[platform];
     if (!provider) return;
-
     signInWithPopup(auth, provider)
-      .then((result) => {
+      .then(async (result) => {
+        const user = result.user;
+        const dbRef = ref(db);
+        const checkUser = await get(child(dbRef, `users/${user.uid}`));
+        if(!checkUser.exists()) {
+          const defaultUser = user.displayName ? user.displayName.replace(/[^a-zA-Z0-9_-]/g, '') : "User_" + user.uid.substring(0,5);
+          await set(ref(db, 'users/' + user.uid), {
+            username: defaultUser,
+            email: user.email,
+            phone: "Social Login",
+            birthdate: "Social Login",
+            referrer: "none"
+          });
+          await set(ref(db, 'usernames/' + defaultUser.toLowerCase()), user.uid);
+        }
         showToast("เข้าสู่ระบบสำเร็จ!");
       })
-      .catch((error) => {
-        console.error("Social Login Error:", error);
-        showToast("เกิดข้อผิดพลาด หรือโดเมนยังไม่ได้รับอนุญาต");
-      });
+      .catch(() => showToast("ล็อกอินโซเชียลล้มเหลว"));
   };
 
-  // 4. ฟังก์ชันออกจากระบบ
   window.logout = () => {
-    signOut(auth).then(() => {
-      showToast("ออกจากระบบเรียบร้อย");
-    });
+    signOut(auth).then(() => showToast("ออกจากระบบเรียบร้อย"));
   };
 
-  // 5. ดักจับสถานะ เพื่อเปิด-ปิดระบบ บังคับล็อกอินก่อนเข้าหน้าเว็บหลัก
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     const loginGate = document.getElementById('loginGate');
     const mainContent = document.getElementById('mainContent');
     const mainFooter = document.getElementById('mainFooter');
 
     if (user) {
-      // ผู้ใช้ล็อกอินแล้ว -> ซ่อนหน้า Login Gate และแสดงตัวเว็บหลักทันที
       loginGate.style.opacity = '0';
       loginGate.style.visibility = 'hidden';
       mainContent.style.display = 'flex';
       mainFooter.style.display = 'block';
 
-      // ดึงข้อมูลผู้ใช้มาแสดงผลที่มุมบนเว็บ
+      let displayUser = user.email.split('@')[0];
+      try {
+        const dbRef = ref(db);
+        const getUserData = await get(child(dbRef, `users/${user.uid}`));
+        if(getUserData.exists()) {
+          displayUser = getUserData.val().username;
+        }
+      } catch(e) { console.error(e); }
+
       document.getElementById('userAvatar').src = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user.uid;
-      document.getElementById('userName').textContent = user.displayName || user.email.split('@')[0];
+      document.getElementById('userName').textContent = displayUser;
       document.getElementById('userEmail').textContent = user.email;
     } else {
-      // ผู้ใช้ยังไม่ได้ล็อกอิน / ออกจากระบบ -> แสดงหน้า Login Gate ขวางไว้ บังคับล็อกอิน
       loginGate.style.opacity = '1';
       loginGate.style.visibility = 'visible';
       mainContent.style.display = 'none';
       mainFooter.style.display = 'none';
-      
-      // ล้างฟอร์มกรอกข้อมูลเก่า
       document.getElementById('emailAuthForm').reset();
+      document.getElementById('usernameStatus').style.display = 'none';
+      document.getElementById('passwordMatchStatus').style.display = 'none';
+      document.getElementById('refStatus').style.display = 'none';
     }
   });
 
@@ -488,18 +745,15 @@
 </script>
 
 <script>
-  // ฟังก์ชันก๊อปปี้สคริปต์ลง Clipboard
   function copyScript() {
     const text = document.getElementById('brainrotScript').textContent;
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('copyBtn');
       btn.classList.add('copied');
       btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
-      
       const toast = document.getElementById('toast');
       document.getElementById('toastText').textContent = "คัดลอกแล้ว!";
       toast.classList.add('show');
-      
       setTimeout(() => {
         toast.classList.remove('show');
         btn.classList.remove('copied');

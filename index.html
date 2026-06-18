@@ -605,7 +605,10 @@
 
     /* ===== AVATAR FRAME (rank-based) ===== */
     /*
-      Frame PNGs: 512×442px. Adjusted sizing for proper alignment.
+      Frame PNGs: 512×442px. Smallest hole_ratio = 0.637 (Gold).
+      Frame overlay = 157% of avatar → 157%×42 = 65.9px.
+      Gold hole in that size = 65.9×0.637 = 42px = exact avatar ✓
+      Centered explicitly via translate(-50%,-50%) on avatar center.
     */
     .avatar-wrap {
       position: relative;
@@ -616,7 +619,7 @@
     .user-avatar { position: relative; z-index: 1; flex-shrink: 0; }
     .avatar-frame {
       position: absolute;
-      width: 165%; height: 165%;
+      width: 157%; height: 157%;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none; z-index: 2;
@@ -722,8 +725,8 @@
     }
     .frame-preview-overlay {
       position: absolute;
-      /* 165% of 80px = 132px for proper alignment */
-      width: 165%; height: 165%;
+      /* 157% of 80px = 125.6px → Gold hole = 80px exactly ✓ */
+      width: 157%; height: 157%;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       background-repeat: no-repeat;
@@ -1136,13 +1139,13 @@
           <div class="dropdown-uname" id="dropdownName">User</div>
           <div class="dropdown-email" id="dropdownEmail">Username</div>
         </div>
-        <button class="dropdown-item" onclick="event.stopPropagation(); openUserSettings()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          ตั้งค่ารูปโปรไฟล์
-        </button>
         <button class="dropdown-item" onclick="event.stopPropagation(); showToast('โปรไฟล์ — coming soon')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           โปรไฟล์
+        </button>
+        <button class="dropdown-item" onclick="event.stopPropagation(); openUserSettings()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          ตั้งค่า
         </button>
         <hr class="dropdown-divider">
         <button class="dropdown-item danger" onclick="event.stopPropagation(); logout()">

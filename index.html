@@ -604,19 +604,28 @@
     }
 
     /* ===== AVATAR FRAME (rank-based) ===== */
-    /* avatar-wrap is fixed-size so frame fills it perfectly with inset:0 */
+    /*
+      All frame PNGs are 512×442px (non-square).
+      With background-size:contain in a square container S:
+        rendered hole diameter = S × hole_ratio
+      Smallest hole_ratio = 0.637 (Gold). Avatar = 42px.
+      S = 42 / 0.637 ≈ 66px → all frames fit perfectly.
+    */
     .avatar-wrap {
-      position: relative; display: inline-flex;
-      align-items: center; justify-content: center;
-      width: 56px; height: 56px; flex-shrink: 0;
+      position: relative;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 66px; height: 66px; flex-shrink: 0;
+      overflow: visible;
     }
-    .user-avatar { position: relative; z-index: 1; }
+    .user-avatar { position: relative; z-index: 1; flex-shrink: 0; }
     .avatar-frame {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      background-repeat: no-repeat; background-position: center center; background-size: contain;
+      position: absolute;
+      inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 2;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
       filter: drop-shadow(0 0 6px rgba(255,255,255,0.12));
-      z-index: 2;
     }
     .avatar-wrap.has-frame .user-avatar { border-color: transparent !important; }
 
@@ -700,18 +709,26 @@
     /* fixed-size wrap so frame aligns perfectly with inset:0 */
     .frame-preview-avatar-wrap {
       position: relative; flex-shrink: 0;
-      width: 108px; height: 108px;
+      /*
+        Frame PNGs 512×442, smallest hole_ratio=0.637 (Gold).
+        Avatar=80px → S = 80/0.637 ≈ 126px.
+      */
+      width: 126px; height: 126px;
       display: flex; align-items: center; justify-content: center;
+      overflow: visible;
     }
     .frame-preview-img {
       width: 80px; height: 80px; border-radius: 50%;
       object-fit: cover; border: 2px solid var(--accent);
       box-shadow: 0 0 12px var(--glow);
-      position: relative; z-index: 1;
+      position: relative; z-index: 1; flex-shrink: 0;
     }
     .frame-preview-overlay {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      background-repeat: no-repeat; background-position: center center; background-size: contain;
+      position: absolute;
+      inset: 0; width: 100%; height: 100%;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
       pointer-events: none; z-index: 2;
       transition: background-image 0.25s;
     }
@@ -752,7 +769,9 @@
     .frame-option.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 8px 24px var(--glow); }
     .frame-option .frame-preview {
       width: 100%; height: 100%;
-      background-repeat: no-repeat; background-position: center center; background-size: 88% 88%;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
       transition: transform .3s ease;
     }
     .frame-option:hover:not(.locked) .frame-preview { transform: scale(1.06); }

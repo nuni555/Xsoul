@@ -1735,9 +1735,13 @@ Position = UDim2.new(0, 0, 0, 100),
         pcall(function()
             if self.page and self.page.library and self.page.library.container and self.page.button then
                 colorKey = self.page.library.container.Name .. "_" .. self.page.button.Name .. "_" .. title
-                local savedValue = loadColorPickerValue(colorKey, nil)
-                if savedValue then
-                    default = Color3.fromRGB(savedValue.R, savedValue.G, savedValue.B)
+                -- Don't load saved value for theme color pickers (Thai titles with "สี")
+                -- They use the current theme value as default
+                if not (title and title:find("สี")) then
+                    local savedValue = loadColorPickerValue(colorKey, nil)
+                    if savedValue then
+                        default = Color3.fromRGB(savedValue.R, savedValue.G, savedValue.B)
+                    end
                 end
             end
         end)
@@ -2009,7 +2013,8 @@ Position = UDim2.new(0, 0, 0, 100),
         --self:Resize()
 
         -- Update button color with saved value after tab is created
-        if colorKey and savedSettings.colorpickers and savedSettings.colorpickers[colorKey] then
+        -- Skip for theme color pickers (Thai titles with "สี") since they use themes table
+        if colorKey and savedSettings.colorpickers and savedSettings.colorpickers[colorKey] and not (title and title:find("สี")) then
             local savedValue = savedSettings.colorpickers[colorKey]
             local color3 = Color3.fromRGB(savedValue.R, savedValue.G, savedValue.B)
             colorpicker.Button.ImageColor3 = color3
@@ -2221,7 +2226,9 @@ Position = UDim2.new(0, 0, 0, 100),
 
         tab.Container.Button.MouseButton1Click:Connect(function()
             onColorChange(color3)
-            if colorKey then
+            -- Only save to colorpickers if this is NOT a theme color picker
+            -- Theme colors (Thai titles with "สี") are already saved in savedSettings.themes via win:setTheme()
+            if colorKey and not (title and title:find("สี")) then
                 saveColorPickerValue(colorKey, color3)
                 debouncedSave()
             end
@@ -3107,6 +3114,31 @@ setting1:ColorPicker("สีตัวหนังสือ", themes.TextColor, f
     saveSettings()
 end)
 
+-- Update theme color picker buttons to display loaded theme colors
+-- This ensures they show the correct colors after system restart
+spawn(function()
+    wait(0.5) -- Wait for color pickers to be fully created
+    local themeMap = {
+        ["สีสวิตช์ปิด"] = "NotToggledColor",
+        ["สีสวิตช์เปิด"] = "ToggledColor",
+        ["สีพื้นหลัง"] = "Background",
+        ["สีแถบบน"] = "TopBarColor",
+        ["สีตัวหนังสือ"] = "TextColor"
+    }
+
+    -- Use setting1's colorpickers table to update each color picker
+    for colorpicker, pickerData in pairs(setting1.colorpickers) do
+        if colorpicker and colorpicker:FindFirstChild("Button") and colorpicker:FindFirstChild("Title") then
+            local titleText = colorpicker.Title.Text
+            local themeName = themeMap[titleText]
+            if themeName and themes[themeName] then
+                -- Use the section's updateColorPicker function to properly update all properties
+                setting1:updateColorPicker(colorpicker, nil, themes[themeName])
+            end
+        end
+    end
+end)
+
 local setting2 = page2:NewSecction("ฟอนต์ & ขนาด และภาษา")
 
 setting2:Textbox("ขนาดตัวหนังสือ", tostring(savedSettings.fontSize or 14), function(size)
@@ -3396,7 +3428,33 @@ resetButton.MouseButton1Click:Connect(function()
     for themeName, color in pairs(themes) do
         win:setTheme(themeName, color)
     end
-    
+
+    -- Update theme color picker buttons to display reset colors
+    local themeMap = {
+        ["สีสวิตช์ปิด"] = "NotToggledColor",
+        ["สีสวิตช์เปิด"] = "ToggledColor",
+        ["สีพื้นหลัง"] = "Background",
+        ["สีแถบบน"] = "TopBarColor",
+        ["สีตัวหนังสือ"] = "TextColor"
+    }
+
+    print("Reset: Found " .. #setting1.modules .. " modules in setting1")
+    print("Reset: Found " .. #setting1.colorpickers .. " colorpickers in setting1")
+
+    -- Use setting1's colorpickers table to update each color picker
+    for colorpicker, pickerData in pairs(setting1.colorpickers) do
+        if colorpicker and colorpicker:FindFirstChild("Button") and colorpicker:FindFirstChild("Title") then
+            local titleText = colorpicker.Title.Text
+            local themeName = themeMap[titleText]
+            print("Reset: Found color picker with title: " .. titleText .. ", themeName: " .. tostring(themeName))
+            if themeName and themes[themeName] then
+                print("Reset: Updating color picker " .. titleText .. " to " .. tostring(themes[themeName]))
+                -- Use the section's updateColorPicker function to properly update all properties
+                setting1:updateColorPicker(colorpicker, nil, themes[themeName])
+            end
+        end
+    end
+
     -- Reset font size
     for _, child in pairs(win.container.Main:GetDescendants()) do
         if child:IsA("TextLabel") or child:IsA("TextButton") then

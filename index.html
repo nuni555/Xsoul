@@ -532,7 +532,7 @@
     
     .user-settings-modal {
       background: var(--card); border: 1px solid var(--border); border-radius: 24px;
-      padding: 32px; width: min(400px, 90vw); max-height: 85vh; overflow-y: auto;
+      padding: 36px; width: min(720px, 95vw); max-height: 88vh; overflow-y: auto;
       transform: scale(0.9) translateY(20px); transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
     }
     .user-settings-overlay.active .user-settings-modal { transform: scale(1) translateY(0); }
@@ -584,7 +584,7 @@
     /* ===== AVATAR FRAME (rank-based) ===== */
     .avatar-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
     .avatar-frame {
-      position: absolute; inset: -55%; pointer-events: none;
+      position: absolute; inset: -28%; pointer-events: none;
       background-repeat: no-repeat; background-position: center; background-size: contain;
       filter: drop-shadow(0 0 8px rgba(255,255,255,0.15));
     }
@@ -592,20 +592,27 @@
 
     /* Frame picker grid */
     .frame-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+      padding: 4px;
     }
     .frame-option {
-      position: relative; aspect-ratio: 1/1; border-radius: 16px;
-      background: #0f1320; border: 1px solid var(--border); cursor: pointer;
+      position: relative; aspect-ratio: 1/1; border-radius: 18px;
+      background: linear-gradient(160deg, #11142090, #0c0f1a90);
+      border: 1px solid var(--border); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s; overflow: hidden;
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+      overflow: hidden;
     }
     .frame-option:hover:not(.locked) { transform: translateY(-2px); border-color: var(--accent); }
     .frame-option.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 8px 24px var(--glow); }
     .frame-option .frame-preview {
-      width: 90%; height: 90%;
-      background-repeat: no-repeat; background-position: center; background-size: contain;
+      width: 100%; height: 100%;
+      background-repeat: no-repeat; background-position: center; background-size: 92% auto;
+      transition: transform .3s ease;
     }
+    .frame-option:hover:not(.locked) .frame-preview { transform: scale(1.06); }
     .frame-option.locked { cursor: not-allowed; }
     .frame-option.locked .frame-preview { filter: grayscale(1) brightness(0.45); opacity: 0.55; }
     .frame-option .lock-overlay {
@@ -616,9 +623,10 @@
     .frame-option.locked .lock-overlay { display: flex; }
     .frame-option .lock-overlay svg { width: 22px; height: 22px; }
     .frame-option .frame-label {
-      position: absolute; bottom: 6px; left: 0; right: 0; text-align: center;
-      font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+      position: absolute; bottom: 8px; left: 0; right: 0; text-align: center;
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--muted); font-family: var(--mono);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.7);
     }
     .frame-option.selected .frame-label { color: var(--accent); }
     .frame-option[data-frame="none"] .frame-preview {
@@ -1151,34 +1159,16 @@
     <button class="user-settings-close" onclick="closeUserSettings()">✕</button>
     <div class="user-settings-header">
       <h2 class="user-settings-title">ตั้งค่ารูปโปรไฟล์</h2>
-      <p class="user-settings-description">ปรับแต่งกรอบและขอบรอบรูปโปรไฟล์ของคุณ</p>
+      <p class="user-settings-description">เลือกกรอบโปรไฟล์ที่คุณได้ปลดล็อคตามแรงค์</p>
     </div>
     <div class="settings-form">
       <div class="form-group">
-        <label class="form-label">กรอบโปรไฟล์ตามแรงค์</label>
-        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:10px;">ปลดล็อคกรอบเพิ่มเติมเมื่อคุณเลื่อนขั้นถึงแรงค์นั้น ๆ</p>
+        <label class="form-label">เลือกกรอบโปรไฟล์ตามแรงค์</label>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.5;">เลือกกรอบที่ปลดล็อคแล้วเพื่อใช้งานทันที กรอบใหม่จะปลดล็อคอัตโนมัติเมื่อคุณเลื่อนขั้นถึงแรงค์นั้น ๆ</p>
         <div class="frame-grid" id="frameGrid"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">สีขอบ (ใช้เมื่อไม่มีกรอบ)</label>
-        <input type="color" id="avatarBorderColor" class="form-input" value="#7c5cfc">
-      </div>
-      <div class="form-group">
-        <label class="form-label">ความหนาขอบ (px)</label>
-        <input type="number" id="avatarBorderWidth" class="form-input" value="2" min="0" max="8">
-      </div>
-      <div class="form-group">
-        <label class="form-label">สไตล์ขอบ</label>
-        <select id="avatarBorderStyle" class="form-input">
-          <option value="solid">Solid (เส้นเดียว)</option>
-          <option value="dashed">Dashed (เส้นประ)</option>
-          <option value="dotted">Dotted (จุด)</option>
-          <option value="double">Double (เส้นคู่)</option>
-        </select>
-      </div>
       <div class="settings-actions">
-        <button class="btn btn-secondary" onclick="closeUserSettings()">ยกเลิก</button>
-        <button class="btn btn-primary" onclick="saveAvatarStyle()">บันทึก</button>
+        <button class="btn btn-primary" onclick="closeUserSettings()">เสร็จสิ้น</button>
       </div>
     </div>
 

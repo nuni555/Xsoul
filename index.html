@@ -148,7 +148,7 @@
     .user-chip { position: relative; display: flex; align-items: center; cursor: pointer; }
     .user-chip-inner {
       position: relative;
-      display: flex; align-items: center; gap: 5px;
+      display: flex; align-items: center; gap: 10px;
       background: rgba(22,26,39,0.9); border: 1px solid var(--border);
       border-radius: 999px; padding: 5px 14px 5px 6px; transition: all 0.25s;
       box-shadow: 0 2px 12px rgba(0,0,0,0.3);
@@ -167,9 +167,9 @@
     /* Rank tag — sits inline under the username */
     .rank-tag {
       display: inline-block;
-      font-family: var(--mono); font-size: 0.55rem; font-weight: 800;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 2px 8px; border-radius: 999px;
+      font-family: var(--mono); font-size: 0.5rem; font-weight: 800;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 1px 5px; border-radius: 999px;
       text-align: center; overflow: hidden; text-overflow: ellipsis;
       border: 1px solid transparent; line-height: 1.1; white-space: nowrap;
       flex-shrink: 0; pointer-events: none;
@@ -1542,7 +1542,7 @@
       .chip-name { font-size: 0.88rem !important; }
       .user-avatar { width: 38px !important; height: 38px !important; }
       .avatar-wrap { width: 38px !important; height: 38px !important; }
-      .rank-tag { font-size: 0.55rem; padding: 3px 7px; }
+      .rank-tag { font-size: 0.5rem; padding: 1px 5px; }
       .chip-name { max-width: 70px; }
     }
 
@@ -2675,7 +2675,7 @@
         const labelMap = {
           free:'Free', bronze:'Bronze', silver:'Silver', gold:'Gold',
           platinum:'Platinum', diamond:'Diamond',
-          premium:'PremiumMAX', premiummax:'PremiumMAX'
+          premium:'P-MAX', premiummax:'P-MAX'
         };
         rankTagEl.textContent = labelMap[rankKey] || userRank;
         rankTagEl.className = 'rank-tag rank-tag-' + rankKey;

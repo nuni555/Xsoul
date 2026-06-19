@@ -2217,23 +2217,13 @@
         ⚠️ บัญชีของคุณเข้าสู่ระบบด้วย Google / GitHub — กรุณากรอกเบอร์โทรศัพท์เพื่อยืนยันตัวตนให้ครบถ้วน
       </div>
 
-      <!-- PHONE VERIFICATION -->
+      <!-- PHONE -->
       <div style="margin-bottom:22px;">
         <div style="font-size:0.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
           <span style="width:7px;height:7px;border-radius:50%;background:var(--accent2);display:inline-block;box-shadow:0 0 6px var(--accent2);"></span>
           เบอร์โทรศัพท์
-          <span id="phoneVerifiedBadge" style="display:none;background:#4ade8022;color:#4ade80;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:2px 8px;">✓ ยืนยันแล้ว</span>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input class="form-input" id="settingsPhone" type="tel" placeholder="+66812345678" style="flex:1;font-family:var(--mono);letter-spacing:0.05em;" />
-          <button class="btn btn-primary" id="sendPhoneOtpBtn" onclick="sendPhoneOtp()" style="flex:0 0 auto;padding:12px 16px;white-space:nowrap;font-size:0.82rem;">ส่ง OTP</button>
-        </div>
-        <div id="recaptcha-container" style="margin-bottom:8px;"></div>
-        <div id="phoneOtpRow" style="display:none;display:flex;gap:8px;">
-          <input class="form-input" id="settingsPhoneOtp" type="text" maxlength="6" placeholder="รหัส OTP 6 หลัก" style="flex:1;font-family:var(--mono);letter-spacing:0.2em;text-align:center;" />
-          <button class="btn btn-primary" onclick="verifyPhoneOtp()" style="flex:0 0 auto;padding:12px 16px;white-space:nowrap;font-size:0.82rem;">ยืนยัน</button>
-        </div>
-        <div id="phoneOtpMsg" style="font-size:0.75rem;margin-top:4px;"></div>
+        <input class="form-input" id="settingsPhone" type="tel" placeholder="+66812345678" style="width:100%;font-family:var(--mono);letter-spacing:0.05em;" />
       </div>
 
       <!-- EMAIL VERIFICATION -->
@@ -3555,50 +3545,6 @@
     if ((localStorage.getItem('xsoul_theme') || 'dark') === 'auto') applyTheme('auto');
   });
 
-  // ===== PHONE OTP =====
-  let _phoneConfirm = null;
-  window.sendPhoneOtp = async () => {
-    const phone = document.getElementById('settingsPhone').value.trim();
-    const msg = document.getElementById('phoneOtpMsg');
-    if (!phone.match(/^\+\d{9,15}$/)) {
-      msg.style.color = 'var(--error)'; msg.textContent = 'กรุณาใส่เบอร์ในรูปแบบ +66XXXXXXXXX'; return;
-    }
-    msg.style.color = 'var(--muted)'; msg.textContent = 'กำลังส่ง OTP...';
-    try {
-      if (!window._recaptchaVerifier) {
-        window._recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-      }
-      _phoneConfirm = await signInWithPhoneNumber(auth, phone, window._recaptchaVerifier);
-      document.getElementById('phoneOtpRow').style.display = 'flex';
-      msg.style.color = 'var(--success)'; msg.textContent = '✓ ส่ง OTP ไปยัง ' + phone + ' แล้ว กรุณาตรวจสอบ SMS';
-    } catch (e) {
-      msg.style.color = 'var(--error)'; msg.textContent = 'ส่ง OTP ไม่สำเร็จ: ' + (e.message || e.code);
-      window._recaptchaVerifier = null;
-    }
-  };
-
-  window.verifyPhoneOtp = async () => {
-    const code = document.getElementById('settingsPhoneOtp').value.trim();
-    const msg = document.getElementById('phoneOtpMsg');
-    if (!_phoneConfirm) { msg.style.color='var(--error)'; msg.textContent='กรุณากดส่ง OTP ก่อน'; return; }
-    if (code.length !== 6) { msg.style.color='var(--error)'; msg.textContent='กรุณากรอกรหัส 6 หลัก'; return; }
-    msg.style.color = 'var(--muted)'; msg.textContent = 'กำลังยืนยัน...';
-    try {
-      const credential = PhoneAuthProvider.credential(_phoneConfirm.verificationId, code);
-      await linkWithCredential(auth.currentUser, credential);
-      const phone = document.getElementById('settingsPhone').value.trim();
-      await set(ref(db, `users/${auth.currentUser.uid}/phone`), phone);
-      await set(ref(db, `users/${auth.currentUser.uid}/phoneVerified`), true);
-      document.getElementById('phoneVerifiedBadge').style.display = 'inline-flex';
-      document.getElementById('phoneOtpRow').style.display = 'none';
-      msg.style.color = 'var(--success)'; msg.textContent = '✓ ยืนยันเบอร์โทรสำเร็จ!';
-      _phoneConfirm = null;
-    } catch (e) {
-      msg.style.color = 'var(--error)';
-      msg.textContent = e.code === 'auth/invalid-verification-code' ? 'รหัส OTP ไม่ถูกต้อง' : ('เกิดข้อผิดพลาด: ' + (e.code||e.message));
-    }
-  };
-
   // ===== EMAIL VERIFY =====
   window.sendEmailVerifyLink = async () => {
     const msg = document.getElementById('emailOtpMsg');
@@ -3630,8 +3576,8 @@
     msg.textContent = '';
     try {
       const updates = { address, termsAccepted: true };
-      // save phone if not Social and user hasn't verified yet
-      if (phone && phone !== 'Social') updates.phone = phone;
+      // Save phone if provided
+      if (phone) updates.phone = phone;
       await Promise.all(Object.entries(updates).map(([k,v]) => set(ref(db,`users/${user.uid}/${k}`), v)));
       showToast('✓ บันทึกข้อมูลสำเร็จ');
       msg.style.color='var(--success)'; msg.textContent='✓ บันทึกแล้ว';

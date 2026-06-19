@@ -3393,11 +3393,14 @@
           countryCodeEl.style.background = 'var(--bg)';
           countryCodeEl.style.color = 'var(--text)';
         }
-        // Hide yellow warning
+        // Hide yellow warning when phone is verified
         const socialWarning = document.getElementById('socialPhoneWarning');
         if (socialWarning) socialWarning.style.display = 'none';
       } else {
         if (pvBadge) pvBadge.style.display = 'none';
+        // Show yellow warning when phone is not verified
+        const socialWarning = document.getElementById('socialPhoneWarning');
+        if (socialWarning) socialWarning.style.display = 'block';
       }
       
       // Check if all verification fields are complete (phone, address, birthdate)
@@ -4212,7 +4215,7 @@
       const phoneEl = document.getElementById('acctPhone');
       if (phoneEl) phoneEl.textContent = (d.phone && d.phone !== 'Social') ? d.phone : '(ยังไม่ได้ระบุ)';
       const pvEl = document.getElementById('acctPhoneVerified');
-      if (pvEl) pvEl.style.display = d.phoneVerified ? 'inline-flex' : 'none';
+      if (pvEl) pvEl.style.display = (d.phone && d.phone !== 'Social' && d.phoneVerified) ? 'inline-flex' : 'none';
       const addrEl = document.getElementById('acctAddress');
       if (addrEl) addrEl.textContent = (d.address && d.address !== 'Social') ? d.address : '(ยังไม่ได้ระบุ)';
       const avEl = document.getElementById('acctAddressVerified');
@@ -4229,7 +4232,7 @@
         }
       }
       const bvEl = document.getElementById('acctBirthdateVerified');
-      if (bvEl) bvEl.style.display = (d.birthdate && d.birthdate !== 'Social' && d.phoneVerified) ? 'inline-flex' : 'none';
+      if (bvEl) bvEl.style.display = (d.birthdate && d.birthdate !== 'Social' && d.birthdate.trim() !== '') ? 'inline-flex' : 'none';
       const refEl = document.getElementById('acctReferrer');
       if (refEl) refEl.textContent = (d.referrer && d.referrer !== 'none') ? d.referrer : '(ไม่มี)';
       const rk = (d.rank || 'free').toLowerCase().replace(/\s+/g,'');

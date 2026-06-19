@@ -2408,6 +2408,13 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
+  // Expose Firebase instances to the non-module script (loadAccountInfo etc.)
+  window.auth = auth;
+  window.db = db;
+  window.fbRef = ref;
+  window.fbGet = get;
+  window.fbSet = set;
+  window.fbOnValue = onValue;
   let isSignUpMode = false;
   let isUsernameValid = false;
   const providers = { google: new GoogleAuthProvider(), github: new GithubAuthProvider() };
@@ -3526,6 +3533,14 @@
 
   /* ===== ACCOUNT INFO TAB ===== */
   async function loadAccountInfo() {
+    const auth = window.auth;
+    const db = window.db;
+    const ref = window.fbRef;
+    const get = window.fbGet;
+    if (!auth || !db || !ref || !get) {
+      console.warn('[loadAccountInfo] Firebase not ready yet');
+      return;
+    }
     const user = auth.currentUser;
     if (!user) return;
     const RANK_META_INFO = {
@@ -3543,7 +3558,7 @@
     try {
       const ca = await get(ref(db,`users/${user.uid}/customAvatar`));
       if (ca.exists() && ca.val() && av) av.src = ca.val();
-    } catch {}
+    } catch (e) { console.warn('[loadAccountInfo] customAvatar:', e); }
     const uidEl = document.getElementById('acctUID');
     if (uidEl) uidEl.textContent = user.uid;
     const emailEl = document.getElementById('acctEmail');
@@ -3556,7 +3571,7 @@
         const d = new Date(user.metadata.creationTime);
         joinEl.textContent = d.toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'});
       }
-    } catch {}
+    } catch (e) { console.warn('[loadAccountInfo] joinDate:', e); }
     try {
       const snap = await get(ref(db,`users/${user.uid}`));
       if (!snap.exists()) return;
@@ -3585,8 +3600,9 @@
       const credits = Number(d.credits) || 0;
       const crEl = document.getElementById('acctCredits');
       if (crEl) crEl.textContent = credits.toLocaleString();
-    } catch {}
+    } catch (e) { console.warn('[loadAccountInfo] userData:', e); }
   }
+  window.loadAccountInfo = loadAccountInfo;
 
   /* ===== TOPUP SYSTEM ===== */
   let _topupSelectedPkg = null;

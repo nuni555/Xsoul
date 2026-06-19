@@ -2325,7 +2325,7 @@
             <div style="font-size:0.7rem;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;">📱 เบอร์โทรศัพท์</div>
             <div style="font-size:0.88rem;font-weight:600;color:var(--text);" id="acctPhone">–</div>
           </div>
-          <span id="acctPhoneVerified" style="display:none;background:#4ade8022;color:#16a34a;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:3px 10px;font-weight:700;flex-shrink:0;">✓ ยืนยันแล้ว</span>
+          <span id="acctPhoneVerified" style="display:none;background:#4ade8022;color:#16a34a;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:3px 10px;font-weight:700;flex-shrink:0;">✓ บันทึกแล้ว</span>
         </div>
         <!-- Address -->
         <div class="acct-info-row" style="background:rgba(124,92,252,0.04);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
@@ -3229,9 +3229,90 @@
       const d = snap.val();
       // phone
       const phoneEl = document.getElementById('settingsPhone');
-      if (phoneEl && d.phone && d.phone !== 'Social') phoneEl.value = d.phone;
+      const countryCodeEl = document.getElementById('phoneCountryCode');
+      if (phoneEl && d.phone && d.phone !== 'Social') {
+        // Extract country code and phone number
+        let countryCode = '+66';
+        let phoneNumber = d.phone;
+        if (d.phone.startsWith('+66')) {
+          countryCode = '+66';
+          phoneNumber = d.phone.substring(3);
+        } else if (d.phone.startsWith('+1')) {
+          countryCode = '+1';
+          phoneNumber = d.phone.substring(2);
+        } else if (d.phone.startsWith('+44')) {
+          countryCode = '+44';
+          phoneNumber = d.phone.substring(3);
+        } else if (d.phone.startsWith('+81')) {
+          countryCode = '+81';
+          phoneNumber = d.phone.substring(3);
+        } else if (d.phone.startsWith('+86')) {
+          countryCode = '+86';
+          phoneNumber = d.phone.substring(3);
+        } else if (d.phone.startsWith('+82')) {
+          countryCode = '+82';
+          phoneNumber = d.phone.substring(3);
+        }
+        phoneEl.value = phoneNumber;
+        if (countryCodeEl) countryCodeEl.value = countryCode;
+      }
       const pvBadge = document.getElementById('phoneVerifiedBadge');
-      if (pvBadge) pvBadge.style.display = d.phoneVerified ? 'inline-flex' : 'none';
+      const avBadge = document.getElementById('addressVerifiedBadge');
+      
+      // If phone is verified, show badges and make fields read-only
+      if (d.phoneVerified) {
+        if (pvBadge) {
+          pvBadge.style.display = 'inline-flex';
+          pvBadge.textContent = '✓ บันทึกแล้ว';
+        }
+        // Make phone fields read-only
+        if (phoneEl) {
+          phoneEl.readOnly = true;
+          phoneEl.style.background = 'var(--bg)';
+          phoneEl.style.color = 'var(--text)';
+        }
+        if (countryCodeEl) {
+          countryCodeEl.disabled = true;
+          countryCodeEl.style.background = 'var(--bg)';
+          countryCodeEl.style.color = 'var(--text)';
+        }
+        // Hide yellow warning
+        const socialWarning = document.getElementById('socialPhoneWarning');
+        if (socialWarning) socialWarning.style.display = 'none';
+        // Show green verified message
+        const parent = document.getElementById('stab-content-verify');
+        if (parent) {
+          const existing = parent.querySelector('.verified-success-message');
+          if (!existing) {
+            const verifiedMsg = document.createElement('div');
+            verifiedMsg.style.cssText = 'background:#4ade8022;border:1px solid #4ade8055;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:0.83rem;color:#4ade80;line-height:1.6;';
+            verifiedMsg.innerHTML = '✅ ยืนยันตัวตนแล้ว';
+            verifiedMsg.className = 'verified-success-message';
+            parent.insertBefore(verifiedMsg, parent.firstChild);
+          }
+        }
+        // Show edit button and hide save button
+        document.getElementById('editContactInfoBtn').style.display = 'block';
+        document.querySelector('button[onclick="saveVerificationData()"]').style.display = 'none';
+      } else {
+        if (pvBadge) pvBadge.style.display = 'none';
+      }
+      
+      // If address is saved, show badge and make field read-only
+      if (d.address) {
+        if (avBadge) {
+          avBadge.style.display = 'inline-flex';
+        }
+        const addrEl = document.getElementById('settingsAddress');
+        if (addrEl && d.phoneVerified) {
+          addrEl.readOnly = true;
+          addrEl.style.background = 'var(--bg)';
+          addrEl.style.color = 'var(--text)';
+        }
+      } else {
+        if (avBadge) avBadge.style.display = 'none';
+      }
+      
       // address
       const addrEl = document.getElementById('settingsAddress');
       if (addrEl && d.address) addrEl.value = d.address;
@@ -3301,8 +3382,11 @@
     msg.textContent = '';
     try {
       const updates = { address, termsAccepted: true };
-      // Save phone if provided (with country code)
-      if (phone) updates.phone = countryCode + phone;
+      // Save phone if provided (with country code) and mark as verified
+      if (phone) {
+        updates.phone = countryCode + phone;
+        updates.phoneVerified = true;
+      }
       
       console.log('Updates to save:', updates);
       
@@ -3347,10 +3431,13 @@
       // Make fields read-only
       document.getElementById('settingsPhone').readOnly = true;
       document.getElementById('settingsPhone').style.background = 'var(--bg)';
+      document.getElementById('settingsPhone').style.color = 'var(--text)';
       document.getElementById('phoneCountryCode').disabled = true;
       document.getElementById('phoneCountryCode').style.background = 'var(--bg)';
+      document.getElementById('phoneCountryCode').style.color = 'var(--text)';
       document.getElementById('settingsAddress').readOnly = true;
       document.getElementById('settingsAddress').style.background = 'var(--bg)';
+      document.getElementById('settingsAddress').style.color = 'var(--text)';
       
       // Show edit button
       document.getElementById('editContactInfoBtn').style.display = 'block';

@@ -1678,7 +1678,7 @@
           <div class="grid-fields">
             <div class="input-field">
               <label for="regPhone">เบอร์โทรศัพท์</label>
-              <input type="tel" id="regPhone" placeholder="0987654321" required>
+              <input type="tel" id="regPhone" placeholder="0987654321">
               <div id="phoneCheckStatus" class="status-msg"></div>
             </div>
             <div class="input-field">
@@ -2735,7 +2735,7 @@
   window.toggleAuthMode = () => {
     isSignUpMode = !isSignUpMode;
     document.getElementById('authTitle').textContent = isSignUpMode ? 'สร้างบัญชีใหม่' : 'Xsoul HUD';
-    document.getElementById('authDesc').textContent = isSignUpMode ? 'กรอกข้อมูลเพื่อเปิดสิทธิ์' : 'กรุณาเข้าสู่ระบบบัญชีของคุณ';
+    document.getElementById('authDesc').textContent = isSignUpMode ? 'กรอกข้อมูลเพื่อเปิดสิทธิ' : 'กรุณาเข้าสู่ระบบบัญชีของคุณ';
     document.getElementById('submitAuthBtn').textContent = isSignUpMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
     document.getElementById('switchAuthMode').textContent = isSignUpMode ? 'มีบัญชีแล้ว? เข้าสู่ระบบที่นี่' : 'ยังไม่มีบัญชี? สมัครใช้งานคลิกที่นี่';
     document.getElementById('signUpFields').style.display = isSignUpMode ? 'flex' : 'none';
@@ -2743,6 +2743,13 @@
     document.getElementById('authConfirmPassword').required = isSignUpMode;
     document.getElementById('labelEmail').textContent = isSignUpMode ? 'อีเมลสำหรับใช้งาน (Email)' : 'อีเมล หรือ ชื่อผู้ใช้';
     document.getElementById('authEmail').placeholder = isSignUpMode ? 'example@xsoul.com' : 'example@xsoul.com หรือ username';
+    // Hide password strength meter during login mode
+    const strengthBar = document.getElementById('passwordStrengthBar');
+    const strengthText = document.getElementById('passwordStrengthText');
+    if (!isSignUpMode) {
+      if (strengthBar) strengthBar.style.width = '0%';
+      if (strengthText) strengthText.textContent = '';
+    }
   };
 
   window.handleAuthSubmit = async () => {
@@ -2755,6 +2762,7 @@
       const refCode = document.getElementById('regRef').value.trim();
       const confirmPassword = document.getElementById('authConfirmPassword').value;
       if (!isUsernameValid) { showToast('ชื่อผู้ใช้ไม่ถูกต้อง', true); return; }
+      if (!phone) { showToast('กรุณากรอกเบอร์โทรศัพท์', true); return; }
       if (password !== confirmPassword) { showToast('รหัสผ่านไม่ตรงกัน', true); return; }
       // Check if phone number is already used
       if (phone) {

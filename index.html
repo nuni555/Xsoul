@@ -2222,8 +2222,20 @@
         <div style="font-size:0.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
           <span style="width:7px;height:7px;border-radius:50%;background:var(--accent2);display:inline-block;box-shadow:0 0 6px var(--accent2);"></span>
           เบอร์โทรศัพท์
+          <span id="phoneVerifiedBadge" style="display:none;background:#4ade8022;color:#4ade80;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:2px 8px;">✓ ยืนยันแล้ว</span>
         </div>
-        <input class="form-input" id="settingsPhone" type="tel" placeholder="+66812345678" style="width:100%;font-family:var(--mono);letter-spacing:0.05em;" />
+        <div style="display:flex;gap:8px;">
+          <select id="phoneCountryCode" class="form-input" style="flex:0 0 auto;width:90px;font-family:var(--mono);">
+            <option value="+66">+66 (TH)</option>
+            <option value="+1">+1 (US)</option>
+            <option value="+44">+44 (UK)</option>
+            <option value="+81">+81 (JP)</option>
+            <option value="+86">+86 (CN)</option>
+            <option value="+82">+82 (KR)</option>
+          </select>
+          <input class="form-input" id="settingsPhone" type="tel" placeholder="812345678" style="flex:1;font-family:var(--mono);letter-spacing:0.05em;" />
+        </div>
+        <div id="phoneErrorMsg" style="font-size:0.75rem;margin-top:4px;color:var(--error);"></div>
       </div>
 
       <!-- EMAIL VERIFICATION -->
@@ -2245,8 +2257,14 @@
         <div style="font-size:0.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
           <span style="width:7px;height:7px;border-radius:50%;background:var(--accent2);display:inline-block;box-shadow:0 0 6px var(--accent2);"></span>
           ที่อยู่ปัจจุบัน
+          <span id="addressVerifiedBadge" style="display:none;background:#4ade8022;color:#4ade80;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:2px 8px;">✓ บันทึกแล้ว</span>
         </div>
         <textarea class="form-input" id="settingsAddress" rows="3" placeholder="บ้านเลขที่ / ถนน / ตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์" style="resize:vertical;line-height:1.6;"></textarea>
+      </div>
+
+      <!-- EDIT BUTTON (shown when data is saved) -->
+      <div id="editContactInfoBtn" style="display:none;margin-bottom:22px;">
+        <button class="btn btn-secondary" onclick="enableContactInfoEdit()" style="width:100%;padding:10px;font-size:0.85rem;">✏️ แก้ไขข้อมูลติดต่อ</button>
       </div>
 
       <!-- TERMS -->
@@ -2303,6 +2321,14 @@
             <div style="font-size:0.88rem;font-weight:600;color:var(--text);" id="acctPhone">–</div>
           </div>
           <span id="acctPhoneVerified" style="display:none;background:#4ade8022;color:#16a34a;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:3px 10px;font-weight:700;flex-shrink:0;">✓ ยืนยันแล้ว</span>
+        </div>
+        <!-- Address -->
+        <div class="acct-info-row" style="background:rgba(124,92,252,0.04);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:0.7rem;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;">📍 ที่อยู่</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--text);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="acctAddress">–</div>
+          </div>
+          <span id="acctAddressVerified" style="display:none;background:#4ade8022;color:#16a34a;border:1px solid #4ade8055;border-radius:999px;font-size:0.65rem;padding:3px 10px;font-weight:700;flex-shrink:0;">✓ บันทึกแล้ว</span>
         </div>
         <!-- Birthdate -->
         <div class="acct-info-row" style="background:rgba(124,92,252,0.04);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
@@ -3211,6 +3237,28 @@
   };
 
   // ===== SAVE VERIFICATION DATA =====
+  // Phone number length requirements by country code
+  const PHONE_LENGTHS = {
+    '+66': 9,  // Thailand: 9 digits (excluding +66)
+    '+1': 10,  // US/Canada: 10 digits
+    '+44': 10, // UK: 10 digits
+    '+81': 10, // Japan: 10 digits
+    '+86': 11, // China: 11 digits
+    '+82': 10, // Korea: 10 digits
+  };
+
+  window.validatePhoneNumber = (countryCode, phone) => {
+    const requiredLength = PHONE_LENGTHS[countryCode] || 10;
+    if (!phone || phone.length !== requiredLength) {
+      return false;
+    }
+    // Check if phone contains only digits
+    if (!/^\d+$/.test(phone)) {
+      return false;
+    }
+    return true;
+  };
+
   window.saveVerificationData = async () => {
     const user = auth.currentUser;
     if (!user) {
@@ -3222,19 +3270,34 @@
     const terms = document.getElementById('settingsTerms').checked;
     const msg = document.getElementById('termsMsg');
     const phone = document.getElementById('settingsPhone').value.trim();
+    const countryCode = document.getElementById('phoneCountryCode').value;
+    const phoneErrorMsg = document.getElementById('phoneErrorMsg');
     
-    console.log('Saving data:', { phone, address, terms, uid: user.uid });
+    console.log('Saving data:', { phone, address, terms, uid: user.uid, countryCode });
     
     if (!terms) { 
       msg.style.color='var(--error)'; 
       msg.textContent='กรุณายอมรับข้อกำหนดและเงื่อนไขก่อน'; 
       return; 
     }
+    
+    // Validate phone number if provided
+    if (phone) {
+      if (!window.validatePhoneNumber(countryCode, phone)) {
+        const requiredLength = PHONE_LENGTHS[countryCode] || 10;
+        phoneErrorMsg.textContent = `เบอร์โทรศัพท์ไม่ถูกต้อง ต้องมี ${requiredLength} หลัก`;
+        phoneErrorMsg.style.display = 'block';
+        return;
+      }
+      phoneErrorMsg.textContent = '';
+      phoneErrorMsg.style.display = 'none';
+    }
+    
     msg.textContent = '';
     try {
       const updates = { address, termsAccepted: true };
-      // Save phone if provided
-      if (phone) updates.phone = phone;
+      // Save phone if provided (with country code)
+      if (phone) updates.phone = countryCode + phone;
       
       console.log('Updates to save:', updates);
       
@@ -3246,6 +3309,28 @@
       showToast('✓ บันทึกข้อมูลสำเร็จ');
       msg.style.color='var(--success)'; msg.textContent='✓ บันทึกแล้ว';
       
+      // Show verified badges
+      if (phone) {
+        document.getElementById('phoneVerifiedBadge').style.display = 'inline-flex';
+      }
+      if (address) {
+        document.getElementById('addressVerifiedBadge').style.display = 'inline-flex';
+      }
+      
+      // Make fields read-only
+      document.getElementById('settingsPhone').readOnly = true;
+      document.getElementById('settingsPhone').style.background = 'var(--bg)';
+      document.getElementById('phoneCountryCode').disabled = true;
+      document.getElementById('phoneCountryCode').style.background = 'var(--bg)';
+      document.getElementById('settingsAddress').readOnly = true;
+      document.getElementById('settingsAddress').style.background = 'var(--bg)';
+      
+      // Show edit button
+      document.getElementById('editContactInfoBtn').style.display = 'block';
+      
+      // Hide save button temporarily
+      document.querySelector('button[onclick="saveVerificationData()"]').style.display = 'none';
+      
       // Close the settings window after successful save
       setTimeout(() => closeUserSettings(), 500);
     } catch(e) {
@@ -3254,6 +3339,22 @@
       msg.style.color='var(--error)'; 
       msg.textContent='บันทึกไม่สำเร็จ: ' + (e.message || e.code);
     }
+  };
+
+  window.enableContactInfoEdit = () => {
+    // Make fields editable
+    document.getElementById('settingsPhone').readOnly = false;
+    document.getElementById('settingsPhone').style.background = '';
+    document.getElementById('phoneCountryCode').disabled = false;
+    document.getElementById('phoneCountryCode').style.background = '';
+    document.getElementById('settingsAddress').readOnly = false;
+    document.getElementById('settingsAddress').style.background = '';
+    
+    // Hide edit button
+    document.getElementById('editContactInfoBtn').style.display = 'none';
+    
+    // Show save button
+    document.querySelector('button[onclick="saveVerificationData()"]').style.display = 'block';
   };
 
 </script>
@@ -3807,6 +3908,10 @@
       if (phoneEl) phoneEl.textContent = (d.phone && d.phone !== 'Social') ? d.phone : '(ยังไม่ได้ระบุ)';
       const pvEl = document.getElementById('acctPhoneVerified');
       if (pvEl) pvEl.style.display = d.phoneVerified ? 'inline-flex' : 'none';
+      const addrEl = document.getElementById('acctAddress');
+      if (addrEl) addrEl.textContent = d.address || '(ยังไม่ได้ระบุ)';
+      const avEl = document.getElementById('acctAddressVerified');
+      if (avEl) avEl.style.display = d.address ? 'inline-flex' : 'none';
       const bdEl = document.getElementById('acctBirthdate');
       if (bdEl) bdEl.textContent = (d.birthdate && d.birthdate !== 'Social') ? d.birthdate : '(ยังไม่ได้ระบุ)';
       const refEl = document.getElementById('acctReferrer');

@@ -857,6 +857,15 @@
     .theme-btn:hover { border-color:var(--accent); color:var(--text); }
     .theme-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 10px var(--glow); }
 
+    /* Language buttons */
+    .lang-btn {
+      padding:12px 8px; border-radius:10px; border:1px solid var(--border);
+      background:transparent; color:var(--muted); font-family:var(--sans); font-weight:600;
+      cursor:pointer; transition:all 0.2s; font-size:0.88rem;
+    }
+    .lang-btn:hover { border-color:var(--accent); color:var(--text); }
+    .lang-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 10px var(--glow); }
+
     /* Light theme overrides */
     body.theme-light {
       --bg:     #eef1f8;
@@ -2356,6 +2365,15 @@
         <div style="font-size:0.72rem;color:var(--muted);margin-top:8px;">ออโต้ = ตามการตั้งค่าของอุปกรณ์</div>
       </div>
 
+      <!-- LANGUAGE -->
+      <div style="background:#0a0d1a;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">🌐 ภาษา / Language</div>
+        <div style="display:flex;gap:10px;">
+          <button class="lang-btn" id="lang-en" onclick="setLanguage('en')" style="flex:1;">🇺🇸 English</button>
+          <button class="lang-btn" id="lang-th" onclick="setLanguage('th')" style="flex:1;">🇹🇭 ไทย</button>
+        </div>
+      </div>
+
       <button class="btn btn-secondary" onclick="closeUserSettings()" style="width:100%;padding:12px;">ปิด</button>
     </div><!-- end stab-content-display -->
     </div>
@@ -2780,6 +2798,8 @@
   window.__RANK_ORDER = RANK_ORDER;
 
   window.canUseFrame = (frameKey, rank) => {
+    // Allow "none" frame (no frame) for all users regardless of rank
+    if (frameKey === 'none') return true;
     const f = FRAMES.find(x => x.key === frameKey);
     if (!f) return false;
     const have = RANK_ORDER[(rank||'bronze').toLowerCase().replace(/\s+/g,'')] ?? 0;
@@ -3385,14 +3405,29 @@
     localStorage.setItem('xsoul_theme', pref);
   };
 
+  // ===== LANGUAGE =====
+  const LANGUAGES = ['en','th'];
+  function applyLanguage(pref) {
+    LANGUAGES.forEach(l => {
+      const btn = document.getElementById('lang-' + l);
+      if (btn) btn.classList.toggle('active', l === pref);
+    });
+  }
+  window.setLanguage = (pref) => {
+    applyLanguage(pref);
+    localStorage.setItem('xsoul_language', pref);
+  };
+
   function refreshDisplayTabUI() {
     applyFontSize(localStorage.getItem('xsoul_fontSize') || 'medium');
     applyTheme(localStorage.getItem('xsoul_theme') || 'dark');
+    applyLanguage(localStorage.getItem('xsoul_language') || 'en');
   }
 
   // Apply saved prefs on load
   applyFontSize(localStorage.getItem('xsoul_fontSize') || 'medium');
   applyTheme(localStorage.getItem('xsoul_theme') || 'dark');
+  applyLanguage(localStorage.getItem('xsoul_language') || 'en');
   // React to system theme change (for auto mode)
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
     if ((localStorage.getItem('xsoul_theme') || 'dark') === 'auto') applyTheme('auto');

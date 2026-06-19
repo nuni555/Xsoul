@@ -2718,21 +2718,9 @@
     const my = ++emailReq;
     setStatus(s, 'checking', '⏳ กำลังตรวจสอบ...');
     try {
-      // 1) Ask Firebase Auth whether this email is already registered
-      let registered = false;
-      try {
-        const methods = await fetchSignInMethodsForEmail(auth, email);
-        if (methods && methods.length > 0) registered = true;
-      } catch (_) { /* enumeration protection may block this; fall back to DB index */ }
-      // 2) Fallback / extra check against our public email index
-      if (!registered) {
-        try {
-          const snap = await get(ref(db, `emails/${emailKey(email)}`));
-          if (snap.exists()) registered = true;
-        } catch (_) {}
-      }
+      const snap = await get(ref(db, `emails/${emailKey(email)}`));
       if (my !== emailReq) return;
-      if (registered) { setStatus(s, 'error', '❌ อีเมลนี้ถูกใช้ไปแล้ว'); isEmailValid = false; }
+      if (snap.exists()) { setStatus(s, 'error', '❌ อีเมลนี้ถูกใช้ไปแล้ว'); isEmailValid = false; }
       else { setStatus(s, 'success', '✓ อีเมลนี้ใช้ได้'); isEmailValid = true; }
     } catch (err) {
       if (my !== emailReq) return;
@@ -3730,7 +3718,7 @@
     const birthdate = document.getElementById('settingsBirthdate').value;
     const terms = document.getElementById('settingsTerms').checked;
     const msg = document.getElementById('termsMsg');
-    const phone = document.getElementById('settingsPhone').value.trim();
+    let phone = normalizeLocalPhone(document.getElementById('settingsPhone').value.trim());
     const countryCode = document.getElementById('phoneCountryCode').value;
     const phoneErrorMsg = document.getElementById('phoneErrorMsg');
     
@@ -3752,6 +3740,21 @@
       }
       phoneErrorMsg.textContent = '';
       phoneErrorMsg.style.display = 'none';
+
+      // Check phone uniqueness in DB before saving
+      const phoneIndexKey = phoneKey(countryCode) + phone;
+      try {
+        const phoneSnap = await get(ref(db, `phones/${phoneIndexKey}`));
+        if (phoneSnap.exists() && phoneSnap.val().uid !== user.uid) {
+          phoneErrorMsg.textContent = '❌ เบอร์มือถือนี้ถูกใช้โดยบัญชีอื่นแล้ว';
+          phoneErrorMsg.style.display = 'block';
+          return;
+        }
+      } catch (e) {
+        phoneErrorMsg.textContent = '❌ ตรวจสอบเบอร์ไม่ได้: ' + e.message;
+        phoneErrorMsg.style.display = 'block';
+        return;
+      }
     }
     
     msg.textContent = '';
@@ -3771,6 +3774,12 @@
         console.log(`Saving ${k}:`, v);
         return set(ref(db,`users/${user.uid}/${k}`), v);
       }));
+
+      // Write phone to phones index so uniqueness checks work for future registrations
+      if (phone) {
+        const phoneIndexKey = phoneKey(countryCode) + phone;
+        await set(ref(db, `phones/${phoneIndexKey}`), { uid: user.uid });
+      }
       
       showToast('✓ บันทึกข้อมูลสำเร็จ');
       msg.style.color='var(--success)'; msg.textContent='✓ บันทึกแล้ว';

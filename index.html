@@ -2600,6 +2600,20 @@
 
   function validateAllowedChars(t) { return /^[a-zA-Z0-9_-]+$/.test(t); }
 
+  function getUsernameRecordEmail(record) {
+    if (!record) return '';
+    if (typeof record === 'string') return '';
+    if (typeof record === 'object' && typeof record.email === 'string') return record.email.trim();
+    return '';
+  }
+
+  function getUsernameRecordUid(record) {
+    if (!record) return '';
+    if (typeof record === 'string') return record;
+    if (typeof record === 'object' && typeof record.uid === 'string') return record.uid;
+    return '';
+  }
+
   window.generateRandomUsername = () => {
     const pre = ['Xsoul','Shadow','Hunter','Ghost','Alpha','Viper','Cyber'];
     const suf = ['Pro','GG','X','Zero','Slayer','King','God'];
@@ -2788,7 +2802,7 @@
         .then(async uc => {
           const u = uc.user;
           await set(ref(db,'users/'+u.uid), { username, email:loginOrEmail, phone, birthdate:birth, referrer:refCode||'none', rank:'Free' });
-          await set(ref(db,'usernames/'+username.toLowerCase()), u.uid);
+          await set(ref(db,'usernames/'+username.toLowerCase()), { uid: u.uid, email: loginOrEmail });
           showToast('สมัครสมาชิกสำเร็จ!');
         })
         .catch(e => showToast('สมัครไม่สำเร็จ: '+e.message, true));
@@ -2796,15 +2810,32 @@
       let targetEmail = loginOrEmail;
       if (!loginOrEmail.includes('@')) {
         try {
-          const uid = await get(ref(db,`usernames/${loginOrEmail.toLowerCase()}`));
-          if (uid.exists()) {
-            const ud = await get(ref(db,`users/${uid.val()}`));
-            if (ud.exists()) targetEmail = ud.val().email;
-          } else { showToast('ไม่พบชื่อผู้ใช้นี้', true); return; }
-        } catch { showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', true); return; }
+          const usernameSnap = await get(ref(db,`usernames/${loginOrEmail.toLowerCase()}`));
+          if (!usernameSnap.exists()) { showToast('ไม่พบชื่อผู้ใช้นี้', true); return; }
+          const indexedEmail = getUsernameRecordEmail(usernameSnap.val());
+          if (!indexedEmail) {
+            showToast('username นี้เป็นข้อมูลเก่า กรุณาเข้าสู่ระบบด้วยอีเมลก่อน 1 ครั้ง', true);
+            return;
+          }
+          targetEmail = indexedEmail;
+        } catch (e) {
+          console.error('Username lookup error:', e);
+          showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', true);
+          return;
+        }
       }
       signInWithEmailAndPassword(auth, targetEmail, password)
-        .then(() => showToast('ยินดีต้อนรับกลับมา!'))
+        .then(async (uc) => {
+          try {
+            const ud = await get(ref(db,`users/${uc.user.uid}`));
+            if (ud.exists() && ud.val().username) {
+              await set(ref(db,`usernames/${ud.val().username.toLowerCase()}`), { uid: uc.user.uid, email: uc.user.email || targetEmail });
+            }
+          } catch (e) {
+            console.warn('Username index update skipped:', e);
+          }
+          showToast('ยินดีต้อนรับกลับมา!');
+        })
         .catch((e) => {
           const code = e && e.code ? e.code : '';
           let msg = 'อีเมล/รหัสผ่านไม่ถูกต้อง';
@@ -2830,7 +2861,7 @@
         if (!cu.exists()) {
           const dn = u.displayName ? u.displayName.replace(/[^a-zA-Z0-9_-]/g,'') || 'User_'+u.uid.substring(0,5) : 'User_'+u.uid.substring(0,5);
           await set(ref(db,'users/'+u.uid), { username:dn, email:u.email, phone:'Social', birthdate:'Social', referrer:'none', rank:'Free' });
-          await set(ref(db,'usernames/'+dn.toLowerCase()), u.uid);
+          await set(ref(db,'usernames/'+dn.toLowerCase()), { uid: u.uid, email: u.email || '' });
         }
         showToast('เข้าสู่ระบบสำเร็จ!');
       })
@@ -3261,7 +3292,7 @@
     // check username taken
     try {
       const taken = await get(ref(db, `usernames/${newName.toLowerCase()}`));
-      if (taken.exists() && taken.val() !== user.uid) { msg.style.color='var(--error)'; msg.textContent='ชื่อนี้ถูกใช้แล้ว'; return; }
+      if (taken.exists() && getUsernameRecordUid(taken.val()) !== user.uid) { msg.style.color='var(--error)'; msg.textContent='ชื่อนี้ถูกใช้แล้ว'; return; }
     } catch {}
     msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
     try {
@@ -3269,7 +3300,7 @@
       const ud = await get(ref(db, `users/${user.uid}/username`));
       if (ud.exists()) { try { await set(ref(db, `usernames/${ud.val().toLowerCase()}`), null); } catch {} }
       await set(ref(db, `users/${user.uid}/username`), newName);
-      await set(ref(db, `usernames/${newName.toLowerCase()}`), user.uid);
+      await set(ref(db, `usernames/${newName.toLowerCase()}`), { uid: user.uid, email: user.email || '' });
       await set(ref(db, `users/${user.uid}/lastUsernameChange`), Date.now());
       // update UI — only @username display, NOT the navbar display name
       document.getElementById('dropdownEmail').textContent = '@' + newName;
@@ -4531,6 +4562,5 @@
     if (e.target.id === 'rankUpOverlay') closeRankUp();
   });
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

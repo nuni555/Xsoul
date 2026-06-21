@@ -2663,7 +2663,7 @@
     RecaptchaVerifier, signInWithPhoneNumber, sendEmailVerification, linkWithCredential, PhoneAuthProvider,
     fetchSignInMethodsForEmail
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, get, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, query, orderByChild, equalTo, runTransaction, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBUPSUB6Ic8lqKYC7FTRa_szjQmTFeXYlQ",
@@ -2687,6 +2687,9 @@
   window.fbGet = get;
   window.fbSet = set;
   window.fbOnValue = onValue;
+  window.fbRunTx = runTransaction;
+  window.fbRemove = remove;
+  window.fbUpdate = update;
   window.sendEmailVerification = sendEmailVerification;
   let isSignUpMode = false;
   let isUsernameValid = false;
@@ -5522,6 +5525,7 @@
 
   window.submitTopup = async () => {
     const set = window.fbSet, ref = window.fbRef, get = window.fbGet;
+    const runTx = window.fbRunTx, remove = window.fbRemove;
     const user = auth.currentUser;
     if (!user) return;
     const msg = document.getElementById('topupMsg');
@@ -5546,20 +5550,7 @@
       const b64Body  = slipDataUrl.split(',')[1] || slipDataUrl;
       const slipHash = await sha256Hex(b64Body);
       const refKey   = normRef.replace(/[.#$\[\]\/]/g,'_'); // Firebase-safe key
-      // Check global slip index (requires DB rule allowing read/write on /slipIndex)
-      let globalCheckOk = false;
-      try {
-        const [dupRef, dupSlip] = await Promise.all([
-          get(ref(db, `slipIndex/byRef/${refKey}`)),
-          get(ref(db, `slipIndex/byHash/${slipHash}`)),
-        ]);
-        globalCheckOk = true;
-        if (dupRef.exists())  { msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-ref');  btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return; }
-        if (dupSlip.exists()) { msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-slip'); btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return; }
-      } catch(e) {
-        console.warn('[topup] global slipIndex check failed (add DB rules for /slipIndex):', e.message);
-      }
-      // Per-user fallback: scan this user's own history for duplicate ref / hash
+      // ---------- Per-user fallback dedup (always runs first; cheap) ----------
       try {
         const histSnap = await get(ref(db, `users/${user.uid}/topupHistory`));
         if (histSnap.exists()) {
@@ -5577,11 +5568,74 @@
           }
         }
       } catch(e) { console.warn('[topup] per-user dup check failed:', e.message); }
-      if (!globalCheckOk) console.warn('[topup] WARNING: cross-user duplicate prevention is disabled until /slipIndex DB rules are configured.');
+
+      // ---------- ATOMIC global slip claim (cross-user anti-fraud) ----------
+      // Using runTransaction prevents the race where two submissions both pass
+      // the get() check and then both write. If the node already exists, the
+      // transaction aborts and we treat it as a duplicate.
+      let globalClaimOk = false;
+      let hashClaimed = false, refClaimed = false;
+      try {
+        const hashRef = ref(db, `slipIndex/byHash/${slipHash}`);
+        const hashTx = await runTx(hashRef, (cur) => {
+          if (cur !== null && cur !== undefined) return; // abort: already claimed
+          return { uid: user.uid, ts: Date.now(), txRef: normRef };
+        });
+        if (!hashTx.committed) {
+          msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-slip');
+          btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return;
+        }
+        hashClaimed = true;
+
+        const refRef = ref(db, `slipIndex/byRef/${refKey}`);
+        const refTx = await runTx(refRef, (cur) => {
+          if (cur !== null && cur !== undefined) return; // abort
+          return { uid: user.uid, ts: Date.now(), hash: slipHash };
+        });
+        if (!refTx.committed) {
+          // rollback hash claim so user can retry with correct slip
+          try { await remove(hashRef); } catch {}
+          msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-ref');
+          btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return;
+        }
+        refClaimed = true;
+        globalClaimOk = true;
+      } catch(e) {
+        // DB rules missing or network issue — rollback whatever we claimed
+        console.warn('[topup] global slipIndex claim failed (configure DB rules for /slipIndex):', e.message);
+        try { if (hashClaimed) await remove(ref(db, `slipIndex/byHash/${slipHash}`)); } catch {}
+        try { if (refClaimed)  await remove(ref(db, `slipIndex/byRef/${refKey}`)); } catch {}
+      }
 
       const ts = Date.now();
       const uhandle = (document.getElementById('dropdownEmail').textContent || '').replace('@','');
       const dateStr = new Date(ts).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+      // Only auto-approve & auto-credit when the atomic global claim succeeded.
+      // If global dedup is unavailable, fall back to pending status (manual approval).
+      const autoApprove = globalClaimOk;
+      const finalStatus = autoApprove ? 'approved' : 'pending';
+      let creditedAmount = 0;
+      let creditError = null;
+      if (autoApprove) {
+        // Atomically add credits to the user's balance
+        try {
+          const creditsRef = ref(db, `users/${user.uid}/credits`);
+          const addAmount  = Number(_topupSelectedPkg.credits) || 0;
+          const ctx = await runTx(creditsRef, (cur) => (Number(cur) || 0) + addAmount);
+          if (!ctx.committed) throw new Error('credit transaction aborted');
+          creditedAmount = addAmount;
+        } catch(e) {
+          // Roll back the slip claims so the user can retry safely (no double-credit risk:
+          // we only roll back when credit add failed, meaning no credits were added).
+          creditError = e;
+          try { await remove(ref(db, `slipIndex/byHash/${slipHash}`)); } catch {}
+          try { await remove(ref(db, `slipIndex/byRef/${refKey}`)); } catch {}
+          console.error('[topup] auto-credit failed, rolled back claims:', e);
+          msg.style.color='var(--error)';
+          msg.textContent = '❌ ' + (t('err-generic') || 'Error') + ': ' + (e.message || 'credit failed');
+          btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return;
+        }
+      }
       const entry = {
         uid: user.uid,
         username: uhandle,
@@ -5591,22 +5645,20 @@
         amountTHB: _topupSelectedPkg.price,
         currency: 'THB',
         slipImage: slipDataUrl,
-        status: 'pending', createdAt: ts, createdAtStr: dateStr,
-        method, txRef: normRef, slipHash
+        status: finalStatus, createdAt: ts, createdAtStr: dateStr,
+        method, txRef: normRef, slipHash,
+        autoApproved: autoApprove,
+        creditedAmount,
+        approvedAt: autoApprove ? ts : null
       };
       // Write under user's own path (within their uid — ensures Firebase rules allow it)
       await set(ref(db, `users/${user.uid}/topupRequests/${ts}`), entry);
       // Also write history entry
       await set(ref(db, `users/${user.uid}/topupHistory/${ts}`), entry);
-      // Best-effort: register in global slip index for cross-user duplicate prevention
-      try {
-        await set(ref(db, `slipIndex/byRef/${refKey}`),   { uid: user.uid, ts });
-        await set(ref(db, `slipIndex/byHash/${slipHash}`), { uid: user.uid, ts });
-      } catch(e) { console.warn('[topup] slipIndex write failed (add DB rules):', e.message); }
       // Admin notification — bell for admin to see "who, how much, when"
       try {
         await set(ref(db, `adminNotifications/topup/${ts}_${user.uid}`), {
-          type: 'topup_request',
+          type: autoApprove ? 'topup_auto_approved' : 'topup_request',
           uid: user.uid,
           username: uhandle,
           email: user.email || '',
@@ -5618,14 +5670,20 @@
           txRef: normRef,
           slipImage: slipDataUrl,
           slipHash,
-          status: 'pending',
+          status: finalStatus,
+          autoApproved: autoApprove,
+          creditedAmount,
           createdAt: ts,
           createdAtStr: dateStr,
-          message: `💰 ${uhandle} แนบสลิปเติมเครดิต ${_fmt(_topupSelectedPkg.price)} บาท (${_fmt(_topupSelectedPkg.credits)} เครดิต) เวลา ${dateStr}`,
+          message: autoApprove
+            ? `✅ ${uhandle} เติมเครดิตอัตโนมัติ +${_fmt(_topupSelectedPkg.credits)} เครดิต (${_fmt(_topupSelectedPkg.price)} บาท) เวลา ${dateStr}`
+            : `💰 ${uhandle} แนบสลิปเติมเครดิต ${_fmt(_topupSelectedPkg.price)} บาท (${_fmt(_topupSelectedPkg.credits)} เครดิต) เวลา ${dateStr}`,
         });
       } catch(e) { console.warn('[topup] adminNotifications write failed:', e.message); }
       msg.style.color = 'var(--success)';
-      msg.textContent = '✅ ' + t('toast-topup-sent');
+      msg.textContent = autoApprove
+        ? `✅ เติมเครดิตสำเร็จ +${_fmt(creditedAmount)} เครดิต`
+        : '✅ ' + t('toast-topup-sent');
       _topupSelectedPkg = null;
       const _pay2 = document.getElementById('topupPaymentSection'); if (_pay2) _pay2.style.display = 'none';
       if (typeof window.renderTopupPackages === 'function') window.renderTopupPackages();
@@ -5637,6 +5695,8 @@
       const _os2 = document.getElementById('topupOcrStatus'); if (_os2) _os2.textContent = '';
       const _or2 = document.getElementById('topupOcrRef'); if (_or2) _or2.textContent = '';
       loadTopupHistory(user.uid);
+      // Best-effort 15-day cleanup runs after each submission
+      try { cleanupOldTopups(user.uid); } catch {}
     } catch (e) {
       msg.style.color = 'var(--error)';
       msg.textContent = '❌ ' + t('err-generic') + ': ' + (e.message || t('err-submit-fail'));
@@ -5685,6 +5745,53 @@
     const hash = await crypto.subtle.digest('SHA-256', buf);
     return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
+
+  // ===== Auto-cleanup: delete topup entries older than 15 days =====
+  // We delete topupHistory, topupRequests, and the matching adminNotifications/topup
+  // entry. We DO NOT delete slipIndex/{byHash,byRef} — those must persist so the
+  // same slip can never be reused for a future top-up.
+  const TOPUP_RETENTION_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
+  window._topupCleanupRan = 0;
+  async function cleanupOldTopups(uid) {
+    if (!uid) return;
+    // Throttle to once per 6 hours per page session
+    const now = Date.now();
+    if (now - (window._topupCleanupRan || 0) < 6 * 60 * 60 * 1000) return;
+    window._topupCleanupRan = now;
+    const cutoff = now - TOPUP_RETENTION_MS;
+    const get = window.fbGet, ref = window.fbRef, remove = window.fbRemove;
+    if (!get || !ref || !remove) return;
+    try {
+      const [histSnap, reqSnap] = await Promise.all([
+        get(ref(db, `users/${uid}/topupHistory`)),
+        get(ref(db, `users/${uid}/topupRequests`)),
+      ]);
+      const deletions = [];
+      const collectOld = (snap, base) => {
+        if (!snap.exists()) return;
+        const obj = snap.val() || {};
+        for (const key in obj) {
+          const v = obj[key] || {};
+          const ts = Number(v.createdAt || key);
+          if (Number.isFinite(ts) && ts < cutoff) {
+            deletions.push(remove(ref(db, `${base}/${key}`)));
+            // Also remove matching admin notification (best-effort, ignore errors)
+            deletions.push(remove(ref(db, `adminNotifications/topup/${key}_${uid}`)).catch(()=>{}));
+          }
+        }
+      };
+      collectOld(histSnap, `users/${uid}/topupHistory`);
+      collectOld(reqSnap,  `users/${uid}/topupRequests`);
+      if (deletions.length) {
+        await Promise.allSettled(deletions);
+        console.log(`[topup] cleanup removed ${deletions.length} entries older than 15 days`);
+      }
+    } catch(e) {
+      console.warn('[topup] cleanup failed:', e.message);
+    }
+  }
+  window.cleanupOldTopups = cleanupOldTopups;
+
   // Default the tabs to "bank" whenever the topup modal opens
   (function(){
     const _origOpen = window.openTopup;
@@ -5700,6 +5807,10 @@
   async function loadTopupHistory(uid) {
     const tbody = document.getElementById('topupHistoryBody');
     if (!tbody) return;
+    // Best-effort: prune topup entries older than 15 days every time the
+    // history view is opened. slipIndex entries are kept forever to keep
+    // duplicate-slip protection working.
+    try { cleanupOldTopups(uid); } catch {}
     tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:16px;">' + t('status-loading') + '</td></tr>';
     try {
       const [histSnap, reqSnap] = await Promise.all([

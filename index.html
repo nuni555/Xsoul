@@ -2152,15 +2152,15 @@
 
     <!-- Rank bonus info (read-only, auto by rank) -->
     <div id="rankBonusInfo" style="margin: 4px 0 18px; border:1px solid var(--border); border-radius:12px; padding:10px 14px; background:rgba(255,255,255,0.03); font-size:0.8rem; color:var(--muted); text-align:center;">
-      โบนัสตามแรงค์: <span id="rankBonusInfoText" style="color:#ffe566;font-weight:700;">—</span>
+      <span data-i18n="rank-bonus-label">โบนัสตามแรงค์:</span> <span id="rankBonusInfoText" style="color:#ffe566;font-weight:700;">—</span>
     </div>
 
     <!-- Confirm button (always visible; reveals payment section) -->
     <div id="topupConfirmRow" style="margin-bottom:18px;">
-      <button class="btn btn-primary" id="topupConfirmBtn" onclick="confirmTopupSelection()" style="width:100%;padding:14px;font-size:1rem;">
+      <button class="btn btn-primary" id="topupConfirmBtn" onclick="confirmTopupSelection()" style="width:100%;padding:14px;font-size:1rem;" data-i18n="topup-confirm-btn">
         ✅ ยืนยันจำนวนที่เลือก
       </button>
-      <div id="topupConfirmHint" style="margin-top:8px;font-size:0.78rem;color:var(--muted);text-align:center;">
+      <div id="topupConfirmHint" style="margin-top:8px;font-size:0.78rem;color:var(--muted);text-align:center;" data-i18n="topup-confirm-hint">
         เลือกจำนวนเงินด้านบนแล้วกด “ยืนยัน” เพื่อรับเลขบัญชีสำหรับโอน
       </div>
     </div>
@@ -2184,12 +2184,12 @@
 
       <!-- Amount-to-transfer highlight -->
       <div id="topupAmountHighlight" style="margin:0 auto 14px; max-width:320px; padding:12px 14px; border:1px solid #ffd70066; background:#ffd70010; border-radius:12px; text-align:center;">
-        <div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;">ยอดที่ต้องโอน</div>
+        <div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;" data-i18n="topup-amount-label">ยอดที่ต้องโอน</div>
         <div style="font-size:1.6rem;font-weight:800;color:#ffe566;font-family:var(--mono);">
           ฿<span id="topupAmountValue">0</span>
         </div>
         <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">
-          จะได้รับ <span id="topupCreditsValue" style="color:var(--text);font-weight:700;">0</span> เครดิต
+          <span data-i18n="topup-receive-pre">จะได้รับ</span> <span id="topupCreditsValue" style="color:var(--text);font-weight:700;">0</span> <span data-i18n="topup-receive-post">เครดิต</span>
         </div>
       </div>
 
@@ -2232,9 +2232,9 @@
       </div>
 
       <div style="margin-top:12px;padding:10px 12px;border:1px solid #f8717155;background:#f8717110;border-radius:10px;font-size:0.8rem;color:#fca5a5;text-align:center;font-weight:600;">
-        ⚠️ สำคัญ: กรุณาระบุ <span style="font-family:var(--mono);color:#fff;">Username</span> ของคุณในหมายเหตุตอนโอนเงิน
+        <span data-i18n="topup-important-msg">⚠️ สำคัญ: กรุณาระบุ Username ของคุณในหมายเหตุตอนโอนเงิน</span>
         <div style="margin-top:4px;font-size:0.72rem;color:var(--muted);font-weight:400;">
-          Username ของคุณ: <span id="topupUserHandle" style="color:var(--text);font-weight:700;font-family:var(--mono);">-</span>
+          <span data-i18n="topup-your-username">Username ของคุณ:</span> <span id="topupUserHandle" style="color:var(--text);font-weight:700;font-family:var(--mono);">-</span>
         </div>
       </div>
     </div>
@@ -4480,6 +4480,16 @@
       'err-topup-dup-slip': 'This slip URL has already been submitted — duplicate slips are not allowed',
       'topup-remarklabel': '📝 Remark (Optional)',
       'topup-remark-ph': 'e.g. Transferred via KBank xxx',
+      'topup-confirm-btn': '✅ Confirm Selection',
+      'topup-confirm-hint': 'Select an amount above then press "Confirm" to get account details',
+      'topup-pkg-hint': 'Selected ฿{price} — press "Confirm" to show account details',
+      'topup-confirmed-hint': '✅ Confirmed ฿{price} — please transfer to the account below',
+      'topup-amount-label': 'Amount to Transfer',
+      'topup-receive-pre': 'You will receive',
+      'topup-receive-post': 'credits',
+      'rank-bonus-label': 'Rank Bonus:',
+      'topup-important-msg': '⚠️ Important: Include your Username in the transfer memo',
+      'topup-your-username': 'Your Username:',
       'topup-submit-btn': 'Submit Top-Up Request',
       'err-topup-no-ref-ocr': 'Could not detect the transaction reference from your slip. Please use a clearer image.',
       'ocr-scanning': 'Scanning slip for transaction reference…',
@@ -4824,6 +4834,16 @@
       'err-topup-dup-slip': 'URL สลิปนี้ถูกส่งไปแล้ว — ห้ามใช้สลิปซ้ำ',
       'topup-remarklabel': '📝 หมายเหตุ (ไม่บังคับ)',
       'topup-remark-ph': 'เช่น โอนจาก KBank xxx',
+      'topup-confirm-btn': '✅ ยืนยันจำนวนที่เลือก',
+      'topup-confirm-hint': 'เลือกจำนวนเงินด้านบนแล้วกด "ยืนยัน" เพื่อรับเลขบัญชีสำหรับโอน',
+      'topup-pkg-hint': 'เลือก ฿{price} แล้ว — กด "ยืนยัน" เพื่อแสดงเลขบัญชี',
+      'topup-confirmed-hint': '✅ ยืนยัน ฿{price} แล้ว — โปรดโอนตามเลขบัญชีด้านล่าง',
+      'topup-amount-label': 'ยอดที่ต้องโอน',
+      'topup-receive-pre': 'จะได้รับ',
+      'topup-receive-post': 'เครดิต',
+      'rank-bonus-label': 'โบนัสตามแรงค์:',
+      'topup-important-msg': '⚠️ สำคัญ: กรุณาระบุ Username ของคุณในหมายเหตุตอนโอนเงิน',
+      'topup-your-username': 'Username ของคุณ:',
       'topup-submit-btn': 'ส่งคำขอเติมเครดิต',
       'err-topup-no-ref-ocr': 'อ่านเลขอ้างอิงจากสลิปไม่ได้ กรุณาใช้รูปสลิปที่ชัดขึ้น',
       'ocr-scanning': 'กำลังสแกนสลิปเพื่อหาเลขอ้างอิง…',
@@ -5310,7 +5330,7 @@
     if (typeof window.renderTopupPackages === 'function') window.renderTopupPackages();
     document.querySelectorAll('.topup-pkg').forEach(p => p.classList.remove('selected'));
     const _pay = document.getElementById('topupPaymentSection'); if (_pay) _pay.style.display = 'none';
-    const _hint = document.getElementById('topupConfirmHint'); if (_hint) { _hint.style.color = 'var(--muted)'; _hint.textContent = 'เลือกจำนวนเงินด้านบนแล้วกด “ยืนยัน” เพื่อรับเลขบัญชีสำหรับโอน'; }
+    const _hint = document.getElementById('topupConfirmHint'); if (_hint) { _hint.style.color = 'var(--muted)'; _hint.textContent = t('topup-confirm-hint'); }
     { const _sf = document.getElementById('topupSlipFile'); if (_sf) _sf.value = ''; }
     window._topupSlipDataUrl = '';
     document.getElementById('topupMsg').textContent = '';
@@ -5342,9 +5362,9 @@
     const sec = document.getElementById('topupPaymentSection');
     if (sec) sec.style.display = 'none';
     const hint = document.getElementById('topupConfirmHint');
-    if (hint) { hint.style.color = 'var(--muted)'; hint.textContent = `เลือก ฿${_topupSelectedPkg.price} แล้ว — กด “ยืนยัน” เพื่อแสดงเลขบัญชี`; }
+    if (hint) { hint.style.color = 'var(--muted)'; hint.textContent = t('topup-pkg-hint').replace('{price}', _fmt(_topupSelectedPkg.price)); }
     const btn = document.getElementById('topupConfirmBtn');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันจำนวนที่เลือก'; }
+    if (btn) { btn.disabled = false; btn.textContent = t('topup-confirm-btn'); }
   };
 
   // ===== Rank-based bonus (LOCKED — auto-detected per rank, not user-editable) =====
@@ -5417,7 +5437,7 @@
     const msg  = document.getElementById('topupConfirmHint');
     const sec  = document.getElementById('topupPaymentSection');
     if (!_topupSelectedPkg) {
-      if (msg) { msg.style.color = 'var(--error)'; msg.textContent = '❌ กรุณาเลือกจำนวนเงินที่ต้องการเติมก่อน'; }
+      if (msg) { msg.style.color = 'var(--error)'; msg.textContent = '❌ ' + t('err-topup-no-pkg'); }
       return;
     }
     // Reveal payment / account info
@@ -5432,7 +5452,7 @@
       const handle = (document.getElementById('dropdownEmail')?.textContent || '').replace('@','');
       uh.textContent = handle || (auth.currentUser?.email || '-');
     }
-    if (msg) { msg.style.color = 'var(--success)'; msg.textContent = `✅ ยืนยัน ฿${_fmt(_topupSelectedPkg.price)} แล้ว — โปรดโอนตามเลขบัญชีด้านล่าง`; }
+    if (msg) { msg.style.color = 'var(--success)'; msg.textContent = t('topup-confirmed-hint').replace('{price}', _fmt(_topupSelectedPkg.price)); }
     // Smooth scroll into view
     setTimeout(() => { sec?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
   };
@@ -5720,8 +5740,7 @@
       infoBank.style.display = 'block'; infoWal.style.display = 'none';
     } else {
       tabWallet.style.cssText = 'flex:1;max-width:160px;padding:10px 14px;font-size:0.85rem;font-weight:700;border-radius:10px;cursor:pointer;' + active;
-      tabBank.style.cssText   = 'flex:1;max-width:160px;padding:10px 14px;font-size:0.85rem;font-weight:700;border-radius:10px;cursor:pointer;' + inactive;
-      infoBank.style.display = 'none'; infoWal.style.display = 'block';
+      infoWal.style.display = 'block'; infoBank.style.display = 'none';
     }
   };
   window.copyText = async (text, btn) => {
@@ -5756,14 +5775,11 @@
     if (!uid) return;
     // Throttle to once per 6 hours per page session
     const now = Date.now();
-    if (now - (window._topupCleanupRan || 0) < 6 * 60 * 60 * 1000) return;
+    if (now - (window._topupCleanupRan) < 6 * 3600 * 1000) return;
     window._topupCleanupRan = now;
-    const cutoff = now - TOPUP_RETENTION_MS;
-    const get = window.fbGet, ref = window.fbRef, remove = window.fbRemove;
-    if (!get || !ref || !remove) return;
     try {
-      const [histSnap, reqSnap] = await Promise.all([
-        get(ref(db, `users/${uid}/topupHistory`)),
+      const [, snap] = await Promise.all([
+        Promise.resolve(),
         get(ref(db, `users/${uid}/topupRequests`)),
       ]);
       const deletions = [];

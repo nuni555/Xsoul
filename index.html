@@ -1683,6 +1683,8 @@
   </style>
 </head>
 <body>
+<!-- Tesseract.js for slip OCR (auto-detect transaction reference) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <canvas id="particles"></canvas>
 
@@ -2233,18 +2235,6 @@
       <div style="margin-top:12px;font-size:0.75rem;color:var(--muted);" data-i18n="topup-note-val">ระบุ Username ของคุณเมื่อโอน</div>
     </div>
 
-    <!-- Transfer reference number -->
-    <div class="topup-slip-row">
-      <label data-i18n="topup-ref-label">🔢 เลขที่อ้างอิงโอน / Transaction ID</label>
-      <input class="form-input" id="topupTxRef" type="text" maxlength="64"
-        placeholder="เช่น 0123456789ABCDEF"
-        data-i18n-placeholder="topup-ref-ph"
-        style="font-size:0.85rem;font-family:var(--mono);letter-spacing:1px;" />
-      <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;" data-i18n="topup-ref-hint">
-        ใช้เลขอ้างอิงจากสลิปจริง ห้ามใช้ซ้ำกับครั้งก่อน (ระบบตรวจสอบอัตโนมัติ)
-      </div>
-    </div>
-
     <!-- Slip Upload -->
     <div class="topup-slip-row">
       <label data-i18n="topup-slip-label">📎 แนบสลิปหลักฐานการโอน (URL รูปสลิป)</label>
@@ -2253,12 +2243,8 @@
       <div style="font-size:0.7rem;color:var(--muted);margin-top:6px;" data-i18n="topup-slip-where">
         🔒 สลิปจะถูกบันทึกในระบบ (Firebase Realtime DB: users/&lt;uid&gt;/topupRequests) แอดมินจะตรวจสอบและอนุมัติ • ระบบป้องกันการใช้สลิปซ้ำอัตโนมัติ
       </div>
-    </div>
-
-    <!-- Note -->
-    <div style="margin-bottom:18px;">
-      <label style="font-size:0.82rem;color:var(--muted);display:block;margin-bottom:8px;" data-i18n="topup-remarklabel">📝 หมายเหตุ (ไม่บังคับ)</label>
-      <input class="form-input" id="topupNote" type="text" maxlength="100" placeholder="เช่น โอนจาก KBank xxx" data-i18n-placeholder="topup-remark-ph" style="font-size:0.85rem;" />
+      <div id="topupOcrStatus" style="margin-top:8px;font-size:0.78rem;color:var(--muted);min-height:18px;"></div>
+      <div id="topupOcrRef" style="margin-top:4px;font-size:0.8rem;font-family:var(--mono);color:var(--accent);word-break:break-all;"></div>
     </div>
 
     <div id="topupMsg" style="font-size:0.82rem;min-height:18px;margin-bottom:12px;"></div>
@@ -4483,6 +4469,11 @@
       'topup-remarklabel': '📝 Remark (Optional)',
       'topup-remark-ph': 'e.g. Transferred via KBank xxx',
       'topup-submit-btn': 'Submit Top-Up Request',
+      'err-topup-no-ref-ocr': 'Could not detect the transaction reference from your slip. Please use a clearer image.',
+      'ocr-scanning': 'Scanning slip for transaction reference…',
+      'ocr-found': 'Transaction reference detected automatically',
+      'ocr-not-found': 'No reference found in the slip — try a clearer image',
+      'ocr-img-fail': 'Could not read the slip image',
       'topup-history-title': 'Top-Up History',
       'topup-no-history': 'No top-up history yet',
       'topup-load-fail': 'Failed to load history',
@@ -4822,6 +4813,11 @@
       'topup-remarklabel': '📝 หมายเหตุ (ไม่บังคับ)',
       'topup-remark-ph': 'เช่น โอนจาก KBank xxx',
       'topup-submit-btn': 'ส่งคำขอเติมเครดิต',
+      'err-topup-no-ref-ocr': 'อ่านเลขอ้างอิงจากสลิปไม่ได้ กรุณาใช้รูปสลิปที่ชัดขึ้น',
+      'ocr-scanning': 'กำลังสแกนสลิปเพื่อหาเลขอ้างอิง…',
+      'ocr-found': 'ตรวจพบเลขอ้างอิงจากสลิปอัตโนมัติ',
+      'ocr-not-found': 'ไม่พบเลขอ้างอิงในสลิป — กรุณาใช้รูปที่ชัดขึ้น',
+      'ocr-img-fail': 'ไม่สามารถอ่านรูปสลิปได้',
       'topup-history-title': 'ประวัติการเติมเครดิต',
       'topup-no-history': 'ยังไม่มีประวัติการเติมเครดิต',
       'topup-load-fail': 'โหลดข้อมูลไม่สำเร็จ',
@@ -5301,9 +5297,11 @@
     _topupSelectedPkg = null;
     document.querySelectorAll('.topup-pkg').forEach(p => p.classList.remove('selected'));
     document.getElementById('topupSlipUrl').value = '';
-    document.getElementById('topupNote').value = '';
     document.getElementById('topupMsg').textContent = '';
     document.getElementById('topupSlipPreview').style.display = 'none';
+    const _os = document.getElementById('topupOcrStatus'); if (_os) _os.textContent = '';
+    const _or = document.getElementById('topupOcrRef'); if (_or) _or.textContent = '';
+    window._topupDetectedRef = '';
     // show current credits (already kept real-time via onValue listener)
     const c = window.__currentCredits || 0;
     document.getElementById('topupBalanceDisplay').textContent = c.toLocaleString();
@@ -5328,14 +5326,64 @@
 
   window.previewSlip = (url) => {
     const img = document.getElementById('topupSlipPreview');
+    const stEl = document.getElementById('topupOcrStatus');
+    const refEl = document.getElementById('topupOcrRef');
+    window._topupDetectedRef = '';
+    if (stEl) stEl.textContent = '';
+    if (refEl) refEl.textContent = '';
     if (url && url.startsWith('http')) {
       img.src = url;
       img.style.display = 'block';
-      img.onerror = () => { img.style.display = 'none'; };
+      img.onerror = () => { img.style.display = 'none'; if (stEl) stEl.textContent = '❌ ' + t('ocr-img-fail'); };
+      img.onload = () => { runSlipOcr(url); };
     } else {
       img.style.display = 'none';
     }
   };
+
+  // ===== OCR: auto-detect transaction reference from slip image =====
+  window._topupDetectedRef = '';
+  async function runSlipOcr(url) {
+    const stEl = document.getElementById('topupOcrStatus');
+    const refEl = document.getElementById('topupOcrRef');
+    if (typeof Tesseract === 'undefined') {
+      if (stEl) stEl.textContent = '⚠️ OCR not loaded';
+      return;
+    }
+    try {
+      if (stEl) { stEl.style.color = 'var(--muted)'; stEl.textContent = '🔎 ' + t('ocr-scanning'); }
+      const { data } = await Tesseract.recognize(url, 'eng', { logger: () => {} });
+      const text = (data && data.text) || '';
+      const ref = extractSlipRef(text);
+      if (ref) {
+        window._topupDetectedRef = ref;
+        if (stEl) { stEl.style.color = 'var(--success)'; stEl.textContent = '✅ ' + t('ocr-found'); }
+        if (refEl) refEl.textContent = 'Ref: ' + ref;
+      } else {
+        window._topupDetectedRef = '';
+        if (stEl) { stEl.style.color = 'var(--error)'; stEl.textContent = '❌ ' + t('ocr-not-found'); }
+      }
+    } catch (e) {
+      console.warn('[ocr] failed', e);
+      if (stEl) { stEl.style.color = 'var(--error)'; stEl.textContent = '❌ ' + t('ocr-img-fail'); }
+    }
+  }
+  function extractSlipRef(text) {
+    if (!text) return '';
+    const clean = text.replace(/[\s\-]/g, '');
+    // Common Thai bank slip refs: 15–25 alphanumeric/digit sequence after keywords
+    // Try keyword-based first
+    const kw = text.match(/(?:Transaction\s*ID|Ref(?:erence)?\.?\s*(?:No\.?|#)?|เลขที่รายการ|รหัสอ้างอิง|เลขอ้างอิง)[^\w]*([A-Za-z0-9]{8,40})/i);
+    if (kw && kw[1]) return kw[1].toUpperCase();
+    // Fallback: longest alphanumeric run of 12+ chars
+    const matches = clean.match(/[A-Za-z0-9]{12,40}/g) || [];
+    if (matches.length) {
+      matches.sort((a, b) => b.length - a.length);
+      return matches[0].toUpperCase();
+    }
+    return '';
+  }
+  window.runSlipOcr = runSlipOcr;
 
   window.submitTopup = async () => {
     const user = auth.currentUser;
@@ -5343,20 +5391,19 @@
     const msg = document.getElementById('topupMsg');
     const btn = document.getElementById('topupSubmitBtn');
     const slipUrl = document.getElementById('topupSlipUrl').value.trim();
-    const note = document.getElementById('topupNote').value.trim();
-    const txRef = (document.getElementById('topupTxRef')?.value || '').trim();
+    const txRef = (window._topupDetectedRef || '').trim();
     const method = window._topupMethod || 'bank';
     if (!_topupSelectedPkg) {
       msg.style.color = 'var(--error)'; msg.textContent = '❌ ' + t('err-topup-no-pkg'); return;
-    }
-    if (!txRef || txRef.length < 6) {
-      msg.style.color = 'var(--error)'; msg.textContent = '❌ ' + t('err-topup-no-ref'); return;
     }
     if (!slipUrl) {
       msg.style.color = 'var(--error)'; msg.textContent = '❌ ' + t('err-topup-no-slip'); return;
     }
     if (!slipUrl.startsWith('http')) {
       msg.style.color = 'var(--error)'; msg.textContent = '❌ ' + t('err-topup-bad-url'); return;
+    }
+    if (!txRef || txRef.length < 8) {
+      msg.style.color = 'var(--error)'; msg.textContent = '❌ ' + t('err-topup-no-ref-ocr'); return;
     }
     btn.disabled = true; btn.textContent = '⏳ ' + t('status-submitting');
     try {
@@ -5382,12 +5429,14 @@
 
       const ts = Date.now();
       const uhandle = (document.getElementById('dropdownEmail').textContent || '').replace('@','');
+      const dateStr = new Date(ts).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
       const entry = {
         uid: user.uid,
         username: uhandle,
+        email: user.email || '',
         credits: _topupSelectedPkg.credits,
         price: _topupSelectedPkg.price,
-        slipUrl, note: note || '', status: 'pending', createdAt: ts,
+        slipUrl, status: 'pending', createdAt: ts, createdAtStr: dateStr,
         method, txRef: normRef, slipHash
       };
       // Write under user's own path (within their uid — ensures Firebase rules allow it)
@@ -5399,14 +5448,34 @@
         await set(ref(db, `slipIndex/byRef/${refKey}`),   { uid: user.uid, ts });
         await set(ref(db, `slipIndex/byHash/${slipHash}`), { uid: user.uid, ts });
       } catch(e) { console.warn('[topup] slipIndex write failed (add DB rules):', e.message); }
+      // Admin notification — bell for admin to see "who, how much, when"
+      try {
+        await set(ref(db, `adminNotifications/topup/${ts}_${user.uid}`), {
+          type: 'topup_request',
+          uid: user.uid,
+          username: uhandle,
+          email: user.email || '',
+          credits: _topupSelectedPkg.credits,
+          price: _topupSelectedPkg.price,
+          method,
+          txRef: normRef,
+          slipUrl,
+          slipHash,
+          status: 'pending',
+          createdAt: ts,
+          createdAtStr: dateStr,
+          message: `💰 ${uhandle} แนบสลิปเติมเครดิต ${_topupSelectedPkg.price} บาท (${_topupSelectedPkg.credits} เครดิต) เวลา ${dateStr}`,
+        });
+      } catch(e) { console.warn('[topup] adminNotifications write failed:', e.message); }
       msg.style.color = 'var(--success)';
       msg.textContent = '✅ ' + t('toast-topup-sent');
       _topupSelectedPkg = null;
       document.querySelectorAll('.topup-pkg').forEach(p => p.classList.remove('selected'));
       document.getElementById('topupSlipUrl').value = '';
-      document.getElementById('topupNote').value = '';
-      if (document.getElementById('topupTxRef')) document.getElementById('topupTxRef').value = '';
       document.getElementById('topupSlipPreview').style.display = 'none';
+      window._topupDetectedRef = '';
+      const _os2 = document.getElementById('topupOcrStatus'); if (_os2) _os2.textContent = '';
+      const _or2 = document.getElementById('topupOcrRef'); if (_or2) _or2.textContent = '';
       loadTopupHistory(user.uid);
     } catch (e) {
       msg.style.color = 'var(--error)';

@@ -5521,6 +5521,7 @@
   window.runSlipOcr = runSlipOcr;
 
   window.submitTopup = async () => {
+    const set = window.fbSet, ref = window.fbRef, get = window.fbGet;
     const user = auth.currentUser;
     if (!user) return;
     const msg = document.getElementById('topupMsg');
@@ -5546,19 +5547,37 @@
       const slipHash = await sha256Hex(b64Body);
       const refKey   = normRef.replace(/[.#$\[\]\/]/g,'_'); // Firebase-safe key
       // Check global slip index (requires DB rule allowing read/write on /slipIndex)
+      let globalCheckOk = false;
       try {
         const [dupRef, dupSlip] = await Promise.all([
           get(ref(db, `slipIndex/byRef/${refKey}`)),
           get(ref(db, `slipIndex/byHash/${slipHash}`)),
         ]);
-        if (dupRef.exists())  throw new Error('__DUP_REF__');
-        if (dupSlip.exists()) throw new Error('__DUP_SLIP__');
+        globalCheckOk = true;
+        if (dupRef.exists())  { msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-ref');  btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return; }
+        if (dupSlip.exists()) { msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-slip'); btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return; }
       } catch(e) {
-        if (e.message === '__DUP_REF__')  { msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-ref');  btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return; }
-        if (e.message === '__DUP_SLIP__') { msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-slip'); btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return; }
-        // If permission denied, fall back to per-user check only (logged for admin)
-        console.warn('[topup] slipIndex check skipped:', e.message);
+        console.warn('[topup] global slipIndex check failed (add DB rules for /slipIndex):', e.message);
       }
+      // Per-user fallback: scan this user's own history for duplicate ref / hash
+      try {
+        const histSnap = await get(ref(db, `users/${user.uid}/topupHistory`));
+        if (histSnap.exists()) {
+          const hist = histSnap.val() || {};
+          for (const k in hist) {
+            const h = hist[k] || {};
+            if (h.txRef && String(h.txRef).toUpperCase() === normRef) {
+              msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-ref');
+              btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return;
+            }
+            if (h.slipHash && h.slipHash === slipHash) {
+              msg.style.color='var(--error)'; msg.textContent='❌ '+t('err-topup-dup-slip');
+              btn.disabled=false; btn.textContent='📤 '+t('topup-submit-btn'); return;
+            }
+          }
+        }
+      } catch(e) { console.warn('[topup] per-user dup check failed:', e.message); }
+      if (!globalCheckOk) console.warn('[topup] WARNING: cross-user duplicate prevention is disabled until /slipIndex DB rules are configured.');
 
       const ts = Date.now();
       const uhandle = (document.getElementById('dropdownEmail').textContent || '').replace('@','');

@@ -131,6 +131,17 @@
     .role-user { background: rgba(0,212,255,0.2); color: #00d4ff; }
     .status-active { background: rgba(76,175,80,0.2); color: #4caf50; }
     .status-banned { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+    .slip-btn { background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid #ffc107; }
+    .slip-btn:hover { background: #ffc107; color: #1a1a2e; }
+    .topup-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; margin-bottom: 12px; display: grid; grid-template-columns: 120px 1fr auto; gap: 14px; align-items: center; }
+    .topup-card img.slip-thumb { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; cursor: zoom-in; background: #000; border: 1px solid rgba(255,255,255,0.1); }
+    .topup-card .no-slip { width: 120px; height: 120px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.05); border-radius: 8px; color: #666; font-size: 12px; text-align:center; }
+    .topup-info { font-size: 13px; line-height: 1.7; }
+    .topup-info .amount { color: #4caf50; font-size: 18px; font-weight: 700; }
+    .topup-info .meta { color: #aaa; font-size: 12px; }
+    .image-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index: 2000; cursor: zoom-out; }
+    .image-viewer.active { display: flex; }
+    .image-viewer img { max-width: 95vw; max-height: 95vh; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -186,6 +197,22 @@
         </tbody>
       </table>
     </div>
+  </div>
+
+  <!-- Slips Modal -->
+  <div class="modal" id="slipsModal">
+    <div class="modal-content" style="max-width: 760px;">
+      <div class="modal-header">
+        <h2>🧾 ประวัติการเติมเงิน</h2>
+        <button class="close-btn" onclick="closeSlipsModal()">&times;</button>
+      </div>
+      <div id="slipsContent"><div class="loading">กำลังโหลด...</div></div>
+    </div>
+  </div>
+
+  <!-- Image Viewer -->
+  <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
+    <img id="imageViewerImg" alt="slip">
   </div>
 
   <!-- Edit User Modal -->
@@ -349,6 +376,7 @@
           <td style="font-size:12px;">${escapeHtml(formatDate(u.createdAt))}</td>
           <td>
             <button class="action-btn edit-btn" onclick="editUser('${escapeHtml(u.uid)}')">Edit</button>
+            <button class="action-btn slip-btn" onclick="viewSlips('${escapeHtml(u.uid)}')">Slips</button>
             <button class="action-btn delete-btn" onclick="banUser('${escapeHtml(u.uid)}')">${banned ? 'Unban' : 'Ban'}</button>
           </td>
         </tr>`;
@@ -449,6 +477,104 @@
           year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'
         });
       } catch { return String(d); }
+    }
+
+    // ===== Slips / Top-up history =====
+    // ลอง path หลายแบบเผื่อโครงสร้างต่างกัน: topups/{uid}, slips/{uid}, users/{uid}/topups
+    async function fetchUserTopups(uid) {
+      const paths = [`topups/${uid}`, `slips/${uid}`, `users/${uid}/topups`, `users/${uid}/slips`];
+      for (const p of paths) {
+        try {
+          const snap = await db.ref(p).once('value');
+          const val = snap.val();
+          if (val && typeof val === 'object') {
+            return { path: p, items: Object.entries(val).map(([id, v]) => ({ id, ...v })) };
+          }
+        } catch (_) {}
+      }
+      return { path: null, items: [] };
+    }
+
+    let currentSlipsPath = null;
+    let currentSlipsUid = null;
+
+    async function viewSlips(uid) {
+      const user = allUsers.find(u => u.uid === uid);
+      currentSlipsUid = uid;
+      $('slipsContent').innerHTML = '<div class="loading">กำลังโหลด...</div>';
+      $('slipsModal').classList.add('active');
+      const { path, items } = await fetchUserTopups(uid);
+      currentSlipsPath = path;
+      renderSlips(user, items);
+    }
+
+    function renderSlips(user, items) {
+      const header = `<div style="margin-bottom:14px;color:#aaa;font-size:13px;">
+        ผู้ใช้: <strong style="color:#fff;">${escapeHtml(user?.username || '')}</strong>
+        — รวม ${items.length} รายการ
+      </div>`;
+      if (!items.length) {
+        $('slipsContent').innerHTML = header + '<div class="no-results">ไม่พบประวัติการเติมเงิน</div>';
+        return;
+      }
+      // sort newest first
+      items.sort((a, b) => {
+        const ta = new Date(a.timestamp || a.createdAt || a.date || 0).getTime();
+        const tb = new Date(b.timestamp || b.createdAt || b.date || 0).getTime();
+        return tb - ta;
+      });
+      const html = items.map(it => {
+        const slip = it.slipUrl || it.slip || it.imageUrl || it.image || it.slipBase64 || it.url || '';
+        const isImg = slip && (slip.startsWith('http') || slip.startsWith('data:'));
+        const amount = it.amount ?? it.credits ?? it.price ?? 0;
+        const status = it.status || 'pending';
+        const when = formatDate(it.timestamp || it.createdAt || it.date);
+        const ref = it.ref || it.reference || it.txId || it.id;
+        const slipHtml = isImg
+          ? `<img class="slip-thumb" src="${escapeHtml(slip)}" alt="slip" onclick="openImageViewer('${escapeHtml(slip)}')" onerror="this.outerHTML='<div class=&quot;no-slip&quot;>โหลดภาพไม่ได้</div>'">`
+          : `<div class="no-slip">ไม่มีสลิป</div>`;
+        return `
+          <div class="topup-card">
+            ${slipHtml}
+            <div class="topup-info">
+              <div class="amount">฿ ${Number(amount).toLocaleString()}</div>
+              <div>สถานะ: <span class="status-badge ${status==='approved'||status==='success'?'status-active':'status-banned'}">${escapeHtml(status)}</span></div>
+              <div class="meta">เมื่อ: ${escapeHtml(when)}</div>
+              <div class="meta">Ref: ${escapeHtml(ref)}</div>
+            </div>
+            <div>
+              <button class="action-btn delete-btn" onclick="deleteSlip('${escapeHtml(it.id)}')">ลบ</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      $('slipsContent').innerHTML = header + html;
+    }
+
+    async function deleteSlip(id) {
+      if (!currentSlipsPath || !currentSlipsUid) return;
+      if (!confirm('ยืนยันลบรายการเติมเงินนี้?')) return;
+      try {
+        await db.ref(`${currentSlipsPath}/${id}`).remove();
+        viewSlips(currentSlipsUid); // refresh
+      } catch (err) {
+        alert('❌ ลบไม่สำเร็จ: ' + err.message);
+      }
+    }
+
+    function closeSlipsModal() {
+      $('slipsModal').classList.remove('active');
+      currentSlipsPath = null;
+      currentSlipsUid = null;
+    }
+
+    function openImageViewer(src) {
+      $('imageViewerImg').src = src;
+      $('imageViewer').classList.add('active');
+    }
+    function closeImageViewer() {
+      $('imageViewer').classList.remove('active');
+      $('imageViewerImg').src = '';
     }
 
     // Enter key เพื่อ login

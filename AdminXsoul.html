@@ -276,9 +276,9 @@
       databaseURL: "https://xsoul-hud-21e3d-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
 
-    firebase.initializeApp(firebaseConfig, 'adminPanel');
-    const auth = firebase.auth('adminPanel');
-    const db = firebase.database('adminPanel');
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
     let allUsers = [];
     let currentEditingUser = null;

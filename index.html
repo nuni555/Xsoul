@@ -5948,6 +5948,7 @@
     const refEl = document.getElementById('topupOcrRef');
     const bankEl = document.getElementById('topupOcrBank');
     if (typeof Tesseract === 'undefined') {
+      console.error('[ocr] Tesseract not loaded');
       if (stEl) stEl.textContent = '⚠️ OCR not loaded';
       return;
     }
@@ -5955,6 +5956,7 @@
       if (stEl) { stEl.style.color = 'var(--muted)'; stEl.textContent = '🔎 ' + t('ocr-scanning'); }
       if (bankEl) bankEl.textContent = '';
       const expectedAmt = _topupSelectedPkg && _topupSelectedPkg.price;
+      console.log('[ocr] Starting OCR for image');
 
       // Enhanced multi-pass OCR with bank-specific optimizations
       const passes = [
@@ -5973,11 +5975,13 @@
       
       for (const p of passes) {
         let src = url;
-        try { src = await _preprocessSlipImage(url, p.pre); } catch {}
+        try { src = await _preprocessSlipImage(url, p.pre); } catch (e) { console.warn('[ocr] preprocess failed', e); }
         let text = '';
         try {
+          console.log('[ocr] Running pass:', p.lang);
           const { data } = await Tesseract.recognize(src, p.lang, Object.assign({ logger: () => {} }, p.opts || {}));
           text = (data && data.text) || '';
+          console.log('[ocr] Pass result length:', text.length);
         } catch (e) {
           console.warn('[ocr] pass failed', p.lang, e);
           continue;
@@ -6043,8 +6047,8 @@
         if (refEl) refEl.textContent = '';
       }
     } catch (e) {
-      console.warn('[ocr] failed', e);
-      if (stEl) { stEl.style.color = 'var(--error)'; stEl.textContent = '❌ ' + t('ocr-img-fail'); }
+      console.error('[ocr] failed with error:', e);
+      if (stEl) { stEl.style.color = 'var(--error)'; stEl.textContent = '❌ ' + t('ocr-img-fail') + ': ' + e.message; }
     }
   }
   function _normalizeOcrText(text) {

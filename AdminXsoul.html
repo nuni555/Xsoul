@@ -138,16 +138,16 @@
   <div class="login-container" id="loginScreen">
     <div class="login-box">
       <h1>🔐 AdminXsoul</h1>
-      <p class="subtitle">ระบบจัดการผู้ใช้</p>
+      <p class="subtitle">เข้าสู่ระบบด้วย Email/Password</p>
       <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="loginUsername" placeholder="กรอก Username">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@xsoul.com" autocomplete="email">
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="กรอก Password">
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <button class="login-btn" onclick="handleLogin()">Login</button>
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">เข้าสู่ระบบ</button>
       <div class="error-msg" id="loginError"></div>
     </div>
   </div>
@@ -213,10 +213,12 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
 
     let allUsers = [];
     let currentEditingUser = null;
+    let currentAdminUid = null;
 
     // ===== Helpers =====
     const $ = (id) => document.getElementById(id);
@@ -226,47 +228,71 @@
       }[c]));
     }
 
-    // ===== Login (Hardcoded) =====
-    const ADMIN_USERNAME = 'Admin';
-    const ADMIN_PASSWORD = '254761';
-
-    function handleLogin() {
-      const username = $('loginUsername').value.trim();
+    // ===== Firebase Auth =====
+    async function handleLogin() {
+      const email = $('loginEmail').value.trim();
       const password = $('loginPassword').value;
       const errorEl = $('loginError');
+      const btn = $('loginBtn');
+      errorEl.textContent = '';
 
-      if (username.toLowerCase() === ADMIN_USERNAME.toLowerCase() && password === ADMIN_PASSWORD) {
-        localStorage.setItem('adminLoggedIn', 'true');
-        showAdminPanel();
-      } else {
-        errorEl.textContent = '❌ Username หรือ Password ไม่ถูกต้อง';
+      if (!email || !password) {
+        errorEl.textContent = '❌ กรุณากรอกอีเมลและรหัสผ่าน';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'กำลังเข้าสู่ระบบ...';
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // onAuthStateChanged จะตรวจสิทธิ์ admin ต่อ
+      } catch (err) {
+        errorEl.textContent = '❌ ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'เข้าสู่ระบบ';
       }
     }
 
-    function handleLogout() {
-      localStorage.removeItem('adminLoggedIn');
-      showLoginScreen();
+    async function handleLogout() {
+      await auth.signOut();
     }
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        showLoginScreen();
+        return;
+      }
+      // ตรวจสิทธิ์ admin จาก database
+      try {
+        const snap = await db.ref(`users/${user.uid}/role`).once('value');
+        if (snap.val() === 'admin') {
+          currentAdminUid = user.uid;
+          $('currentAdmin').textContent = `เข้าสู่ระบบในชื่อ: ${user.email}`;
+          showAdminPanel();
+        } else {
+          await auth.signOut();
+          $('loginError').textContent = '❌ บัญชีนี้ไม่มีสิทธิ์ admin';
+          showLoginScreen();
+        }
+      } catch (err) {
+        await auth.signOut();
+        $('loginError').textContent = '❌ ตรวจสิทธิ์ไม่สำเร็จ: ' + err.message;
+        showLoginScreen();
+      }
+    });
 
     function showLoginScreen() {
       $('loginScreen').style.display = 'flex';
       $('adminPanel').style.display = 'none';
       $('loginPassword').value = '';
-      $('loginError').textContent = '';
     }
 
     function showAdminPanel() {
       $('loginScreen').style.display = 'none';
       $('adminPanel').style.display = 'block';
-      $('currentAdmin').textContent = 'Admin';
       $('loginError').textContent = '';
       loadUsers();
-    }
-
-    function checkAuth() {
-      if (localStorage.getItem('adminLoggedIn') === 'true') {
-        showAdminPanel();
-      }
     }
 
     // ===== Data =====
@@ -426,14 +452,11 @@
     }
 
     // Enter key เพื่อ login
-    ['loginUsername','loginPassword'].forEach(id => {
+    ['loginEmail','loginPassword'].forEach(id => {
       document.getElementById(id).addEventListener('keypress', e => {
         if (e.key === 'Enter') handleLogin();
       });
     });
-
-    // Initialize
-    checkAuth();
   </script>
 </body>
 </html>

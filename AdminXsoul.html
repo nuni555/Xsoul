@@ -373,13 +373,15 @@
           username: u.username || u.handle || 'N/A',
           email: u.email || 'N/A',
           credits: Number(u.credits) || 0,
+          rank: u.rank || 'Free',
           role: u.role || (u.isAdmin ? 'admin' : 'user'),
           status: u.status || (u.isBanned ? 'banned' : 'active'),
           createdAt: u.createdAt || 'N/A',
           lastLogin: u.lastLogin || 'N/A',
           isAdmin: !!u.isAdmin,
           isBanned: !!u.isBanned,
-          banReason: u.banReason || ''
+          banReason: u.banReason || '',
+          referrer: u.referrer || ''
         }));
         updateStats();
         renderUsers(allUsers);
@@ -513,9 +515,9 @@
     }
 
     // ===== Slips / Top-up history =====
-    // ลอง path หลายแบบเผื่อโครงสร้างต่างกัน: topups/{uid}, slips/{uid}, users/{uid}/topups
+    // ค้นหาจาก path ที่ใช้จริงใน index.html: users/{uid}/topupRequests, users/{uid}/topupHistory
     async function fetchUserTopups(uid) {
-      const paths = [`topups/${uid}`, `slips/${uid}`, `users/${uid}/topups`, `users/${uid}/slips`];
+      const paths = [`users/${uid}/topupRequests`, `users/${uid}/topupHistory`, `topups/${uid}`, `slips/${uid}`, `users/${uid}/topups`, `users/${uid}/slips`];
       for (const p of paths) {
         try {
           const snap = await db.ref(p).once('value');
@@ -618,10 +620,10 @@
     });
 
     // ===== Top-up Notifications (Bell) =====
-    // เก็บรายการเติมเงินทั้งหมดจากหลาย path + ฟังแบบ realtime
+    // เก็บรายการเติมเงินทั้งหมดจาก adminNotifications/topup + users/*/topupRequests
     let allTopups = []; // [{id, uid, path, ...data}]
     let seenIds = new Set(JSON.parse(localStorage.getItem('seenTopupIds') || '[]'));
-    const NOTIF_PATHS = ['topups', 'slips']; // root nodes ที่จะสแกน
+    const NOTIF_PATHS = ['adminNotifications/topup', 'users']; // root nodes ที่จะสแกน
     let notifInitialized = false;
 
     function persistSeen() {
@@ -633,56 +635,74 @@
     async function setupTopupNotifications() {
       if (notifInitialized) return;
       notifInitialized = true;
-      // 1) โหลดทั้งหมดที่มีอยู่ก่อน
-      for (const root of NOTIF_PATHS) {
-        try {
-          const snap = await db.ref(root).once('value');
-          const val = snap.val();
-          if (!val) continue;
-          // โครงสร้างเป็นได้ 2 แบบ: {uid: {id: data}} หรือ {id: {uid, ...}}
-          Object.entries(val).forEach(([k1, v1]) => {
-            if (v1 && typeof v1 === 'object' && !v1.amount && !v1.slipUrl && !v1.slip) {
-              // n: per-user nested
-              Object.entries(v1).forEach(([id, data]) => {
-                if (data && typeof data === 'object') {
-                  allTopups.push({ id, uid: k1, path: `${root}/${k1}/${id}`, ...data });
-                }
-              });
-            } else if (v1 && typeof v1 === 'object') {
-              allTopups.push({ id: k1, uid: v1.uid || v1.userId || '', path: `${root}/${k1}`, ...v1 });
+      
+      // 1) โหลดจาก adminNotifications/topup (path ที่ index.html เขียน)
+      try {
+        const snap = await db.ref('adminNotifications/topup').once('value');
+        const val = snap.val();
+        if (val && typeof val === 'object') {
+          Object.entries(val).forEach(([id, data]) => {
+            if (data && typeof data === 'object') {
+              // Parse uid from key format: {ts}_{uid}
+              const parts = id.split('_');
+              const uid = parts.length > 1 ? parts[parts.length - 1] : (data.uid || '');
+              allTopups.push({ id, uid, path: `adminNotifications/topup/${id}`, ...data });
             }
           });
-        } catch (e) { console.warn('scan', root, e); }
-      }
+        }
+      } catch (e) { console.warn('scan adminNotifications/topup', e); }
+      
+      // 2) โหลดจาก users/*/topupRequests (path ที่ index.html เขียน)
+      try {
+        const usersSnap = await db.ref('users').once('value');
+        const usersVal = usersSnap.val();
+        if (usersVal && typeof usersVal === 'object') {
+          Object.entries(usersVal).forEach(([uid, userData]) => {
+            if (userData && typeof userData === 'object') {
+              const topupRequests = userData.topupRequests;
+              if (topupRequests && typeof topupRequests === 'object') {
+                Object.entries(topupRequests).forEach(([id, data]) => {
+                  if (data && typeof data === 'object') {
+                    allTopups.push({ id, uid, path: `users/${uid}/topupRequests/${id}`, ...data });
+                  }
+                });
+              }
+            }
+          });
+        }
+      } catch (e) { console.warn('scan users/*/topupRequests', e); }
+      
       renderNotifs();
 
-      // 2) ฟัง realtime
-      for (const root of NOTIF_PATHS) {
-        const ref = db.ref(root);
-        // child_added ที่ระดับ root
-        ref.on('child_added', (snap) => {
-          const k1 = snap.key; const v1 = snap.val();
-          if (!v1 || typeof v1 !== 'object') return;
-          if (!v1.amount && !v1.slipUrl && !v1.slip) {
-            // per-user → ฟัง child ภายใน
-            db.ref(`${root}/${k1}`).on('child_added', (s2) => {
-              const id = s2.key; const data = s2.val();
-              if (!data) return;
-              addTopupRealtime({ id, uid: k1, path: `${root}/${k1}/${id}`, ...data });
-            });
-            db.ref(`${root}/${k1}`).on('child_removed', (s2) => {
-              allTopups = allTopups.filter(t => !(t.id === s2.key && t.uid === k1));
-              renderNotifs();
-            });
-          } else {
-            addTopupRealtime({ id: k1, uid: v1.uid || v1.userId || '', path: `${root}/${k1}`, ...v1 });
-          }
+      // 3) ฟัง realtime adminNotifications/topup
+      db.ref('adminNotifications/topup').on('child_added', (snap) => {
+        const id = snap.key;
+        const data = snap.val();
+        if (!data || typeof data !== 'object') return;
+        const parts = id.split('_');
+        const uid = parts.length > 1 ? parts[parts.length - 1] : (data.uid || '');
+        addTopupRealtime({ id, uid, path: `adminNotifications/topup/${id}`, ...data });
+      });
+      
+      db.ref('adminNotifications/topup').on('child_removed', (snap) => {
+        allTopups = allTopups.filter(t => !t.path.startsWith(`adminNotifications/topup/${snap.key}`));
+        renderNotifs();
+      });
+      
+      // 4) ฟัง realtime users/*/topupRequests (ใช้ wildcard ไม่ได้ใน Firebase Compat, ต้องฟัง users level)
+      db.ref('users').on('child_added', (userSnap) => {
+        const uid = userSnap.key;
+        db.ref(`users/${uid}/topupRequests`).on('child_added', (reqSnap) => {
+          const id = reqSnap.key;
+          const data = reqSnap.val();
+          if (!data) return;
+          addTopupRealtime({ id, uid, path: `users/${uid}/topupRequests/${id}`, ...data });
         });
-        ref.on('child_removed', (snap) => {
-          allTopups = allTopups.filter(t => !t.path.startsWith(`${root}/${snap.key}`));
+        db.ref(`users/${uid}/topupRequests`).on('child_removed', (reqSnap) => {
+          allTopups = allTopups.filter(t => !(t.id === reqSnap.key && t.uid === uid));
           renderNotifs();
         });
-      }
+      });
     }
 
     function addTopupRealtime(item) {
